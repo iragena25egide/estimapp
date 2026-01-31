@@ -8,6 +8,7 @@ import {
   Body,
   UploadedFile,
   UseInterceptors,
+  UseGuards,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { DrawingService } from './drawing.service';
@@ -16,14 +17,16 @@ import {
   DrawingStatus,
   DrawingFileType,
 } from '@prisma/client';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
-@Controller('drawings')
+@Controller('estimaApp/drawing')
+@UseGuards(JwtAuthGuard)
 export class DrawingController {
   constructor(private readonly drawingService: DrawingService) {}
 
-  // =====================================
-  // CREATE DRAWING WITH FILE
-  // =====================================
+ 
+
+ 
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
   async upload(

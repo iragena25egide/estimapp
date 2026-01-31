@@ -16,20 +16,18 @@ import {
 export class DrawingService {
   constructor(private prisma: PrismaService) {}
 
-  // =====================================
-  // CREATE DRAWING WITH FILE (IFC / PDF)
-  // =====================================
+
   async createWithFile(
     file: Express.Multer.File,
     data: {
       projectId: string;
       drawingNo: string;
       title: string;
-      discipline: Discipline; // ✅ ENUM
+      discipline: Discipline; 
       revision: string;
       issueDate: string | Date;
       scale: string;
-      status: DrawingStatus; // ✅ ENUM
+      status: DrawingStatus; 
       fileType: DrawingFileType;
     },
   ) {
@@ -41,7 +39,7 @@ export class DrawingService {
       throw new NotFoundException('Project not found');
     }
 
-    // 1️⃣ Save file
+    
     const uploadDir = path.join(__dirname, '..', '..', 'uploads');
     if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 
@@ -52,7 +50,7 @@ export class DrawingService {
 
     fs.writeFileSync(filePath, file.buffer);
 
-    // 2️⃣ IFC Dimensions
+    
     let dimensions: IFCDimensions = {
       length: null,
       width: null,
@@ -67,17 +65,17 @@ export class DrawingService {
       }
     }
 
-    // 3️⃣ Create DrawingRegister
+    
     return this.prisma.drawingRegister.create({
       data: {
         projectId: data.projectId,
         drawingNo: data.drawingNo,
         title: data.title,
-        discipline: data.discipline, // ✅ ENUM OK
+        discipline: data.discipline, 
         revision: data.revision,
         issueDate: new Date(data.issueDate),
         scale: data.scale,
-        status: data.status, // ✅ ENUM OK
+        status: data.status, 
         fileUrl: filePath,
         fileType: data.fileType,
 
@@ -86,19 +84,15 @@ export class DrawingService {
     });
   }
 
-  // ======================
-  // FIND BY PROJECT
-  // ======================
+  
   async findByProject(projectId: string) {
     return this.prisma.drawingRegister.findMany({
       where: { projectId },
-      orderBy: { issueDate: 'desc' }, // ✅ valid field
+      orderBy: { issueDate: 'desc' }, 
     });
   }
 
-  // ======================
-  // FIND ONE
-  // ======================
+
   async findOne(id: string) {
     const drawing = await this.prisma.drawingRegister.findUnique({
       where: { id },
@@ -111,19 +105,17 @@ export class DrawingService {
     return drawing;
   }
 
-  // ======================
-  // UPDATE
-  // ======================
+ 
   async update(
     id: string,
     data: Partial<{
       drawingNo: string;
       title: string;
-      discipline: Discipline; // ✅ ENUM
+      discipline: Discipline; 
       revision: string;
       issueDate: string | Date;
       scale: string;
-      status: DrawingStatus; // ✅ ENUM
+      status: DrawingStatus; 
     }>,
   ) {
     await this.findOne(id);
@@ -137,9 +129,7 @@ export class DrawingService {
     });
   }
 
-  // ======================
-  // DELETE
-  // ======================
+ 
   async remove(id: string) {
     await this.findOne(id);
     return this.prisma.drawingRegister.delete({
