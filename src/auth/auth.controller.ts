@@ -1,0 +1,40 @@
+import { Body, Controller, Post,Get, Req } from '@nestjs/common';
+import { AuthService } from './auth.service';
+import { LoginDto } from '../users/dto/login.dto';
+import { AuthGuard } from '@nestjs/passport';
+import { UseGuards } from '@nestjs/common';
+
+@Controller('estimaApp/auth')
+export class AuthController {
+  constructor(private readonly authService: AuthService) {}
+
+  @Post('login')
+  async login(@Body() dto: LoginDto) {
+    return this.authService.login(dto);
+  }
+
+  
+  @Post('verify-otp')
+  async verifyOtp(
+    @Body() body: { email: string; otp: string },
+  ) {
+    return this.authService.verifyOtp(body.email, body.otp);
+  }
+
+ 
+  @Get('google')
+  @UseGuards(AuthGuard('google'))
+  async googleLogin() {
+   
+  }
+
+  @Get('google/callback')
+  @UseGuards(AuthGuard('google'))
+  async googleCallback(@Req() req: any) {
+    
+    const result = await this.authService.loginOrRegisterGoogle(req.user);
+    return result; 
+  }
+}
+
+

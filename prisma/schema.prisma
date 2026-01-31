@@ -1,0 +1,261 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+model User {
+  id            String      @id @default(uuid())
+  firstName     String
+  lastName      String
+  email         String      @unique
+  phone         String?
+  role          Role        @default(QS)
+  isActive      Boolean     @default(true)
+  localAuth     LocalAuth?
+  googleAuth    GoogleAuth?
+  projects      Project[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  lastLogin     DateTime?
+  isOnline      Boolean     @default(false)
+}
+
+model LocalAuth {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  password    String   // hashed password ONLY
+  verified    Boolean  @default(false)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt   DateTime @default(now())
+}
+
+
+model GoogleAuth {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  googleId    String   @unique
+  avatarUrl   String?
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt   DateTime @default(now())
+}
+
+
+
+
+model Project {
+  id             String   @id @default(uuid())
+  name           String
+  client         String
+  location       String?
+  projectType    String
+  contractType   ContractType
+  startDate      DateTime?
+  completionDate DateTime?
+  estimatorName  String
+  revisionNo     Int      @default(1)
+  createdById String
+  createdBy     User @relation(fields: [createdById], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  drawings       DrawingRegister[]
+  specifications SpecificationRegister[]
+  dimensionSheets DimensionSheet[]
+  boqItems       BoqItem[]
+  rateAnalyses   RateAnalysis[]
+  mtoItems       MaterialTakeOff[]
+  laborCosts     LaborProductivity[]
+  equipmentCosts EquipmentCost[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+
+model DrawingRegister {
+  id          String @id @default(uuid())
+  projectId   String
+  drawingNo   String
+  title       String
+  discipline  Discipline
+  revision    String
+  issueDate   DateTime
+  scale       String
+  status      DrawingStatus
+  fileUrl     String
+  fileType    DrawingFileType
+  length      Float?
+  width       Float?
+  height      Float?
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  dimensionSheets DimensionSheet[]
+}
+
+
+
+model SpecificationRegister {
+  id          String @id @default(uuid())
+  projectId   String
+  specSection String
+  description String
+  discipline  Discipline
+  revision    String
+  remarks     String?
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+
+model DimensionSheet {
+  id          String @id @default(uuid())
+  projectId   String
+  drawingId   String?
+  boqItemNo   String
+  description String
+  drawingRef  String?
+  formula     String?
+  length      Float?
+  width       Float?
+  height      Float?
+  units       Float?
+  quantity    Float
+  unit        String
+  wastePct    Float?
+  netQuantity Float
+
+  project Project @relation(fields: [projectId], references: [id])
+  drawing DrawingRegister? @relation(fields: [drawingId], references: [id])
+}
+
+
+model BoqItem {
+  id              String @id @default(uuid())
+  projectId       String
+  itemNo          String
+  description     String
+  unit            String
+  quantity        Float
+  materialRate    Float
+  laborRate       Float
+  equipmentRate   Float
+  totalRate       Float
+  amount          Float
+  section         String?
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate:Cascade)
+  materials MaterialTakeOff[]
+}
+
+
+model RateAnalysis {
+  id             String @id @default(uuid())
+  projectId      String
+  boqItemNo      String
+  description    String
+  unit           String
+  materialCost   Float
+  laborCost      Float
+  equipmentCost  Float
+  wastage        Float
+  overheads      Float
+  profitPercent  Float
+  finalUnitRate  Float
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate:Cascade)
+}
+
+
+
+
+
+model MaterialTakeOff {
+  id               String @id @default(uuid())
+  projectId        String
+  boqItemId        String?     
+  materialName     String
+  specification    String?
+  unit             String
+  quantity         Float
+  deliveryLocation String?
+  requiredDate     DateTime?
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate:Cascade)
+  boqItem BoqItem? @relation(fields: [boqItemId],references: [id],onDelete: SetNull,onUpdate:SetNull )
+}
+
+
+
+model LaborProductivity {
+  id               String @id @default(uuid())
+  projectId        String
+  trade            String
+  activity         String
+  productivityRate Float   
+  manHours         Float
+  laborRatePerHour Float
+  totalLaborCost   Float
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate:Cascade)
+}
+
+
+model EquipmentCost {
+  id             String @id @default(uuid())
+  projectId      String
+  equipmentName  String
+  capacity       String?
+  hireRatePerDay Float
+  durationDays   Float
+  fuelCost       Float?
+  operatorCost   Float?
+  totalCost      Float
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate:Cascade)
+}
+
+
+model Notification {
+  id            String   @id @default(uuid())
+  type          NotificationType
+  recipientRole Role @default(ADMIN)
+  payload       Json
+  isRead        Boolean  @default(false)
+  createdAt     DateTime @default(now())
+}
+
+
+enum NotificationType {
+  QS_REGISTERED
+}
+
+
+enum Role {
+  ADMIN
+  QS
+  CLIENT
+}
+
+enum ContractType {
+  LUMP_SUM
+  BOQ
+  COST_PLUS
+}
+
+enum Discipline {
+  ARCH
+  STRUCT
+  MEP
+}
+
+enum DrawingStatus {
+  ISSUED
+  REVISED
+  SUPERSEDED
+}
+
+enum DrawingFileType {
+  IMAGE
+  PLN
+  IFC
+}
+
+
+
