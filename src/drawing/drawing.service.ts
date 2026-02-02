@@ -8,8 +8,9 @@ import {
 import * as fs from 'fs';
 import * as path from 'path';
 import {
-  extractDimensionsFromIFC,
+  extractQuantitiesFromIFC,
   IFCDimensions,
+  Quantity
 } from './ifc-extractor';
 
 @Injectable()
@@ -39,7 +40,7 @@ export class DrawingService {
       throw new NotFoundException('Project not found');
     }
 
-    
+    let quantities: Quantity[] = [];
     const uploadDir = path.join(__dirname, '..', '..', 'uploads');
     if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 
@@ -59,7 +60,7 @@ export class DrawingService {
 
     if (data.fileType === DrawingFileType.IFC) {
       try {
-        dimensions = await extractDimensionsFromIFC(filePath);
+        quantities = await extractQuantitiesFromIFC(filePath);
       } catch (error) {
         console.error('IFC parsing failed:', error);
       }
@@ -78,8 +79,8 @@ export class DrawingService {
         status: data.status, 
         fileUrl: filePath,
         fileType: data.fileType,
-
         ...dimensions,
+        quantities
       },
     });
   }
