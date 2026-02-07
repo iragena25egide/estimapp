@@ -11,7 +11,7 @@ import {
 import { SpecificationService } from './specification.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
-@Controller('estimateApp/specifications')
+@Controller('estimaApp/specifications')
 @UseGuards(JwtAuthGuard)
 export class SpecificationController {
   constructor(private readonly specService: SpecificationService) {}

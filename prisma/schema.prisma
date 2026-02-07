@@ -62,7 +62,6 @@ model Project {
   createdBy     User @relation(fields: [createdById], references: [id], onDelete: Cascade, onUpdate: Cascade)
   drawings       DrawingRegister[]
   specifications SpecificationRegister[]
-  dimensionSheets DimensionSheet[]
   boqItems       BoqItem[]
   rateAnalyses   RateAnalysis[]
   mtoItems       MaterialTakeOff[]
@@ -108,25 +107,21 @@ model SpecificationRegister {
 
 
 model DimensionSheet {
-  id          String @id @default(uuid())
-  projectId   String
-  drawingId   String?
-  boqItemNo   String
+  id          String  @id @default(uuid())
+  drawingId   String
+  code        String   
   description String
-  drawingRef  String?
-  formula     String?
-  length      Float?
-  width       Float?
-  height      Float?
-  units       Float?
-  quantity    Float
   unit        String
-  wastePct    Float?
-  netQuantity Float
+  rate        Float
+  quantity    Float
+  total       Float
+  length      Float?   
+  width       Float?   
+  height      Float?  
 
-  project Project @relation(fields: [projectId], references: [id])
-  drawing DrawingRegister? @relation(fields: [drawingId], references: [id])
+  drawing DrawingRegister @relation(fields: [drawingId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
+
 
 
 model BoqItem {

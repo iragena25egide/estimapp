@@ -11,7 +11,7 @@ import {
 import { BoqItemService } from './boq-item.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
-@Controller('estimateApp/boq-items')
+@Controller('estimaApp/boq-items')
 @UseGuards(JwtAuthGuard)
 export class BoqItemController {
   constructor(private readonly service: BoqItemService) {}

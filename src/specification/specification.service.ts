@@ -1,43 +1,61 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import {  CreateSpecificationDto } from './specification-validation';
+import { Discipline } from '@prisma/client';
 
 @Injectable()
 export class SpecificationService {
   constructor(private prisma: PrismaService) {}
 
-  async create(data: {
-    projectId: string;
-    specSection: string;
-    description: string;
-    discipline: any;
-    revision: string;
-    remarks?: string;
-  }) {
-    const project = await this.prisma.project.findUnique({
-      where: { id: data.projectId },
-    });
+ 
+  async create(dto: CreateSpecificationDto) {
+    try {
+      
+      const project = await this.prisma.project.findUnique({
+        where: { id: dto.projectId },
+      });
 
-    if (!project) {
-      throw new NotFoundException('Project not found');
+      if (!project) {
+        throw new NotFoundException('Project not found');
+      }
+
+      return await this.prisma.specificationRegister.create({
+        data: {
+          projectId: dto.projectId,
+          specSection: dto.specSection,
+          description: dto.description,
+          discipline: dto.discipline,
+          revision: dto.revision,
+          remarks: dto.remarks ?? null,
+        },
+      });
+    } catch (err) {
+      if (err instanceof NotFoundException) {
+        throw err;
+      }
+
+      throw new InternalServerErrorException(
+        'Failed to create specification',
+      );
     }
-
-    return this.prisma.specificationRegister.create({
-      data: {
-        projectId: data.projectId,
-        specSection: data.specSection,
-        description: data.description,
-        discipline: data.discipline,
-        revision: data.revision,
-        remarks: data.remarks ?? null,
-      },
-    });
   }
 
+ 
   async findByProject(projectId: string) {
-    return this.prisma.specificationRegister.findMany({
-      where: { projectId },
-      orderBy: { specSection: 'asc' },
-    });
+    try {
+      return await this.prisma.specificationRegister.findMany({
+        where: { projectId },
+        orderBy: { specSection: 'asc' },
+      });
+    } catch (err) {
+      throw new InternalServerErrorException(
+        'Failed to fetch specifications',
+      );
+    }
   }
 
   async findOne(id: string) {
@@ -57,24 +75,45 @@ export class SpecificationService {
     data: Partial<{
       specSection: string;
       description: string;
-      discipline: any;
+      discipline: Discipline;
       revision: string;
       remarks?: string;
     }>,
   ) {
-    await this.findOne(id);
+    try {
+      await this.findOne(id);
 
-    return this.prisma.specificationRegister.update({
-      where: { id },
-      data,
-    });
+      return await this.prisma.specificationRegister.update({
+        where: { id },
+        data,
+      });
+    } catch (err) {
+      if (err instanceof NotFoundException) {
+        throw err;
+      }
+
+      throw new InternalServerErrorException(
+        'Failed to update specification',
+      );
+    }
   }
 
+ 
   async remove(id: string) {
-    await this.findOne(id);
+    try {
+      await this.findOne(id);
 
-    return this.prisma.specificationRegister.delete({
-      where: { id },
-    });
+      return await this.prisma.specificationRegister.delete({
+        where: { id },
+      });
+    } catch (err) {
+      if (err instanceof NotFoundException) {
+        throw err;
+      }
+
+      throw new InternalServerErrorException(
+        'Failed to delete specification',
+      );
+    }
   }
 }

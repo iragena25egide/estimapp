@@ -1,129 +1,111 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import {  IFCDimensions } from '../drawing/ifc-extractor';
+import { CreateDimensionSheetDto } from './dimension-validation';
+import { validate } from 'class-validator';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class DimensionSheetService {
   constructor(private prisma: PrismaService) {}
 
-  async create(data: {
-    projectId: string;
-    drawingId?: string;
-    boqItemNo: string;
-    description: string;
-    drawingRef?: string;
-    formula?: string;
-    length?: number;
-    width?: number;
-    height?: number;
-    units?: number;
-    quantity?: number;
-    unit: string;
-    wastePct?: number;
-  }) {
+  
+  async create(data: CreateDimensionSheetDto) {
     
-    const project = await this.prisma.project.findUnique({
-      where: { id: data.projectId },
+    const dtoInstance = plainToInstance(CreateDimensionSheetDto, data);
+    const errors = await validate(dtoInstance);
+    if (errors.length > 0) {
+      const messages = errors
+        .map(err => Object.values(err.constraints ?? {}).join(', '))
+        .join('; ');
+      throw new BadRequestException(`Validation failed: ${messages}`);
+    }
+
+    
+    const drawing = await this.prisma.drawingRegister.findUnique({
+      where: { id: data.drawingId },
     });
-
-    if (!project) {
-      throw new NotFoundException('Project not found');
+    if (!drawing) {
+      throw new NotFoundException('Drawing not found');
     }
 
-    let drawingDimensions:IFCDimensions = {
-      length: null,
-      width: null,
-      height: null,
-    };
+    
+    const total = data.rate * data.quantity;
 
-    if (data.drawingId) {
-      const drawing = await this.prisma.drawingRegister.findUnique({
-        where: { id: data.drawingId },
+    
+    try {
+      return await this.prisma.dimensionSheet.create({
+        data: {
+          drawingId: data.drawingId,
+          code: data.code,
+          description: data.description,
+          unit: data.unit,
+          rate: data.rate,
+          quantity: data.quantity,
+          total,
+          length: data.length ?? null,
+          width: data.width ?? null,
+          height: data.height ?? null,
+        },
       });
-
-      if (!drawing) {
-        throw new NotFoundException('Drawing not found');
-      }
-
-      drawingDimensions = {
-        length: drawing.length,
-        width: drawing.width,
-        height: drawing.height,
-      };
+    } catch (error) {
+      throw new BadRequestException(error.message);
     }
-
-    
-    const length = data.length ?? drawingDimensions.length;
-    const width = data.width ?? drawingDimensions.width;
-    const height = data.height ?? drawingDimensions.height;
-    const units = data.units ?? 1;
-
-    
-    let quantity = data.quantity ?? 0;
-
-    if (!data.quantity && length && width) {
-      quantity = length * width * (height ?? 1) * units;
-    }
-
-   
-    const wastePct = data.wastePct ?? 0;
-    const netQuantity = quantity + quantity * (wastePct / 100);
+  }
 
   
-    return this.prisma.dimensionSheet.create({
-      data: {
-        projectId: data.projectId,
-        drawingId: data.drawingId,
-        boqItemNo: data.boqItemNo,
-        description: data.description,
-        drawingRef: data.drawingRef,
-        formula: data.formula,
-        length,
-        width,
-        height,
-        units,
-        quantity,
-        unit: data.unit,
-        wastePct,
-        netQuantity,
+  async findByProject(projectId: string) {
+    return this.prisma.dimensionSheet.findMany({
+      where: {
+        drawing: { projectId },
+      },
+      include: {
+        drawing: true,
       },
     });
   }
 
-  async findByProject(projectId: string) {
-    return this.prisma.dimensionSheet.findMany({
-      where: { projectId },
-      include: { drawing: true },
-    });
-  }
-
+  
   async findOne(id: string) {
     const sheet = await this.prisma.dimensionSheet.findUnique({
       where: { id },
       include: { drawing: true },
     });
-
-    if (!sheet) {
-      throw new NotFoundException('Dimension sheet not found');
-    }
-
+    if (!sheet) throw new NotFoundException('Dimension sheet not found');
     return sheet;
   }
 
-  async update(id: string, data: Partial<any>) {
-    await this.findOne(id);
+  
+  async update(id: string, data: Partial<CreateDimensionSheetDto>) {
+    const existing = await this.findOne(id);
+
+    
+    const updatedData = {
+      ...existing,
+      ...data,
+    };
+
+   
+    updatedData.total = updatedData.rate * updatedData.quantity;
 
     return this.prisma.dimensionSheet.update({
       where: { id },
-      data,
+      data: {
+        code: updatedData.code,
+        description: updatedData.description,
+        unit: updatedData.unit,
+        rate: updatedData.rate,
+        quantity: updatedData.quantity,
+        total: updatedData.total,
+        length: updatedData.length ?? null,
+        width: updatedData.width ?? null,
+        height: updatedData.height ?? null,
+      },
     });
   }
 
+ 
   async remove(id: string) {
     await this.findOne(id);
-
-    return this.prisma.dimensionSheet.delete({
-      where: { id },
-    });
+    return this.prisma.dimensionSheet.delete({ where: { id } });
   }
 }

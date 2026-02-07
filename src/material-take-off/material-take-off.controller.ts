@@ -5,7 +5,7 @@ import { MaterialTakeOffService } from './material-take-off.service';
 export class MaterialTakeOffController {
   constructor(private readonly service: MaterialTakeOffService) {}
 
-  @Post()
+  @Post('create')
   create(@Body() body: any) {
     return this.service.create(body);
   }

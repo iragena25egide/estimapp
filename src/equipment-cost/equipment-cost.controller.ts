@@ -1,18 +1,21 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
-import { EquipmentCostService } from './equipment-cost.service';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { EquipmentService } from './equipment-cost.service';
+
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('equipment-cost')
+@UseGuards(JwtAuthGuard)
 export class EquipmentCostController {
-  constructor(private readonly service: EquipmentCostService) {}
+  constructor(private readonly service: EquipmentService) {}
 
-  @Post()
+  @Post('create')
   create(@Body() body: any) {
     return this.service.create(body);
   }
 
   @Get('project/:projectId')
   findAll(@Param('projectId') projectId: string) {
-    return this.service.findAll(projectId);
+    return this.service.findByProject(projectId);
   }
 
   @Get(':id')

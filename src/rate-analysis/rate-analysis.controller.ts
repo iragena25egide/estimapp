@@ -11,7 +11,7 @@ import {
 import { RateAnalysisService } from './rate-analysis.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
-@Controller('estimateApp/rate-analyses')
+@Controller('estimaApp/rate-analyses')
 @UseGuards(JwtAuthGuard)
 export class RateAnalysisController {
   constructor(private readonly service: RateAnalysisService) {}

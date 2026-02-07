@@ -1,22 +1,26 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { CreateBoqItemDto } from './boq-validation';
 
 @Injectable()
 export class BoqItemService {
   constructor(private prisma: PrismaService) {}
 
-  async create(data: {
-    projectId: string;
-    itemNo: string;
-    description: string;
-    unit: string;
-    quantity: number;
-    materialRate: number;
-    laborRate: number;
-    equipmentRate: number;
-    section?: string;
-  }) {
+  
+  async create(data: CreateBoqItemDto) {
    
+    if (!data.projectId || !data.itemNo || !data.description || !data.unit) {
+      throw new BadRequestException('projectId, itemNo, description, and unit are required');
+    }
+
+    if (data.quantity <= 0) {
+      throw new BadRequestException('Quantity must be greater than 0');
+    }
+
+    if (data.materialRate < 0 || data.laborRate < 0 || data.equipmentRate < 0) {
+      throw new BadRequestException('Rates cannot be negative');
+    }
+
     const project = await this.prisma.project.findUnique({
       where: { id: data.projectId },
     });
@@ -26,27 +30,30 @@ export class BoqItemService {
     }
 
     
-    const totalRate =
-      data.materialRate + data.laborRate + data.equipmentRate;
-
+    const totalRate = data.materialRate + data.laborRate + data.equipmentRate;
     const amount = data.quantity * totalRate;
 
     
-    return this.prisma.boqItem.create({
-      data: {
-        projectId: data.projectId,
-        itemNo: data.itemNo,
-        description: data.description,
-        unit: data.unit,
-        quantity: data.quantity,
-        materialRate: data.materialRate,
-        laborRate: data.laborRate,
-        equipmentRate: data.equipmentRate,
-        totalRate,
-        amount,
-        section: data.section,
-      },
-    });
+    try {
+      return await this.prisma.boqItem.create({
+        data: {
+          projectId: data.projectId,
+          itemNo: data.itemNo,
+          description: data.description,
+          unit: data.unit,
+          quantity: data.quantity,
+          materialRate: data.materialRate,
+          laborRate: data.laborRate,
+          equipmentRate: data.equipmentRate,
+          totalRate,
+          amount,
+          section: data.section,
+        },
+      });
+    } catch (error) {
+      
+      throw new BadRequestException(error.message);
+    }
   }
 
   async findByProject(projectId: string) {
@@ -87,6 +94,14 @@ export class BoqItemService {
     const laborRate = data.laborRate ?? existing.laborRate;
     const equipmentRate = data.equipmentRate ?? existing.equipmentRate;
     const quantity = data.quantity ?? existing.quantity;
+
+    // Validation
+    if (quantity <= 0) {
+      throw new BadRequestException('Quantity must be greater than 0');
+    }
+    if (materialRate < 0 || laborRate < 0 || equipmentRate < 0) {
+      throw new BadRequestException('Rates cannot be negative');
+    }
 
     const totalRate = materialRate + laborRate + equipmentRate;
     const amount = quantity * totalRate;

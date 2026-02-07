@@ -5,7 +5,7 @@ import { LaborProductivityService } from './labor-productivity.service';
 export class LaborProductivityController {
   constructor(private readonly service: LaborProductivityService) {}
 
-  @Post()
+  @Post('create')
   create(@Body() body: any) {
     return this.service.create(body);
   }
