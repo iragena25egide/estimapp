@@ -11,7 +11,7 @@ import {
 import { DimensionSheetService } from './dimension.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
-@Controller('estimateApp/dimension')
+@Controller('estimaApp/dimension')
 @UseGuards(JwtAuthGuard)
 export class DimensionSheetController {
   constructor(private readonly service: DimensionSheetService) {}
