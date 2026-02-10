@@ -32,8 +32,7 @@ export class AuthController {
   @UseGuards(AuthGuard('google'))
   async googleCallback(@Req() req: any) {
     
-    const result = await this.authService.loginOrRegisterGoogle(req.user);
-    return result; 
+    return req.user; 
   }
 }
 
