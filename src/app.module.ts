@@ -15,6 +15,9 @@ import { MaterialTakeOffModule } from './material-take-off/material-take-off.mod
 import { LaborProductivityModule } from './labor-productivity/labor-productivity.module';
 import { EquipmentCostModule } from './equipment-cost/equipment-cost.module';
 import { NotificationsModule } from './auth/notification.module';
+import { ReportModule } from './report/report.module';
+import { TeamModule } from './team/team.module';
+import { TeamMemberModule } from './team-member/team-member.module';
 
 
 
@@ -33,7 +36,10 @@ import { NotificationsModule } from './auth/notification.module';
     MaterialTakeOffModule,
     LaborProductivityModule,
     EquipmentCostModule,
-    NotificationsModule
+    NotificationsModule,
+    ReportModule,
+    TeamModule,
+    TeamMemberModule
   ],
   controllers: [AppController],
   providers: [AppService],
