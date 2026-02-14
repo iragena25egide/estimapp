@@ -7,48 +7,46 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
 model User {
-  id            String      @id @default(uuid())
-  firstName     String
-  lastName      String
-  email         String      @unique
-  phone         String?
-  role          Role        @default(QS)
-  isActive      Boolean     @default(true)
-  localAuth     LocalAuth?
-  googleAuth    GoogleAuth?
-  projects      Project[]
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  lastLogin     DateTime?
-  isOnline      Boolean     @default(false)
+  id               String       @id @default(uuid())
+  firstName        String
+  lastName         String
+  email            String       @unique
+  phone            String?
+  role             Role         @default(ESTIMATOR)
+  isActive         Boolean      @default(true)
+  localAuth        LocalAuth?
+  googleAuth       GoogleAuth?
+  projects         Project[]
+  generatedReports Report[]
+  ownedTeams       Team[]
+  teamMemberships  TeamMember[]
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  lastLogin        DateTime?
+  isOnline         Boolean      @default(false)
 }
 
 model LocalAuth {
-  id          String   @id @default(uuid())
-  userId      String   @unique
-  password    String   // hashed password ONLY
-  verified    Boolean  @default(false)
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  createdAt   DateTime @default(now())
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  password  String // hashed password ONLY
+  verified  Boolean  @default(false)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt DateTime @default(now())
 }
-
 
 model GoogleAuth {
-  id          String   @id @default(uuid())
-  userId      String   @unique
-  googleId    String   @unique
-  avatarUrl   String?
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  createdAt   DateTime @default(now())
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  googleId  String   @unique
+  avatarUrl String?
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt DateTime @default(now())
 }
 
-
-
-
 model Project {
-  id             String   @id @default(uuid())
+  id             String                  @id @default(uuid())
   name           String
   client         String
   location       String?
@@ -57,9 +55,9 @@ model Project {
   startDate      DateTime?
   completionDate DateTime?
   estimatorName  String
-  revisionNo     Int      @default(1)
-  createdById String
-  createdBy     User @relation(fields: [createdById], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  revisionNo     Int                     @default(1)
+  createdById    String
+  createdBy      User                    @relation(fields: [createdById], references: [id], onDelete: Cascade, onUpdate: Cascade)
   drawings       DrawingRegister[]
   specifications SpecificationRegister[]
   boqItems       BoqItem[]
@@ -67,106 +65,96 @@ model Project {
   mtoItems       MaterialTakeOff[]
   laborCosts     LaborProductivity[]
   equipmentCosts EquipmentCost[]
+  reports        Report[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-
 model DrawingRegister {
-  id          String @id @default(uuid())
-  projectId   String
-  drawingNo   String
-  title       String
-  discipline  Discipline
-  revision    String
-  issueDate   DateTime
-  scale       String
-  status      DrawingStatus
-  fileUrl     String
-  fileType    DrawingFileType
-  length      Float?
-  width       Float?
-  height      Float?
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id              String           @id @default(uuid())
+  projectId       String
+  drawingNo       String
+  title           String
+  discipline      Discipline
+  revision        String
+  issueDate       DateTime
+  scale           String
+  status          DrawingStatus
+  fileUrl         String
+  fileType        DrawingFileType
+  length          Float?
+  width           Float?
+  height          Float?
+  project         Project          @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   dimensionSheets DimensionSheet[]
 }
 
-
-
 model SpecificationRegister {
-  id          String @id @default(uuid())
+  id          String     @id @default(uuid())
   projectId   String
   specSection String
   description String
   discipline  Discipline
   revision    String
   remarks     String?
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  project     Project    @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
-
 model DimensionSheet {
-  id          String  @id @default(uuid())
+  id          String @id @default(uuid())
   drawingId   String
-  code        String   
+  code        String
   description String
   unit        String
   rate        Float
   quantity    Float
   total       Float
-  length      Float?   
-  width       Float?   
-  height      Float?  
+  length      Float?
+  width       Float?
+  height      Float?
 
   drawing DrawingRegister @relation(fields: [drawingId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
-
-
 model BoqItem {
-  id              String @id @default(uuid())
-  projectId       String
-  itemNo          String
-  description     String
-  unit            String
-  quantity        Float
-  materialRate    Float
-  laborRate       Float
-  equipmentRate   Float
-  totalRate       Float
-  amount          Float
-  section         String?
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate:Cascade)
-  materials MaterialTakeOff[]
+  id            String            @id @default(uuid())
+  projectId     String
+  itemNo        String
+  description   String
+  unit          String
+  quantity      Float
+  materialRate  Float
+  laborRate     Float
+  equipmentRate Float
+  totalRate     Float
+  amount        Float
+  section       String?
+  project       Project           @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  materials     MaterialTakeOff[]
 }
-
 
 model RateAnalysis {
-  id             String @id @default(uuid())
-  projectId      String
-  boqItemNo      String
-  description    String
-  unit           String
-  materialCost   Float
-  laborCost      Float
-  equipmentCost  Float
-  wastage        Float
-  overheads      Float
-  profitPercent  Float
-  finalUnitRate  Float
+  id            String @id @default(uuid())
+  projectId     String
+  boqItemNo     String
+  description   String
+  unit          String
+  materialCost  Float
+  laborCost     Float
+  equipmentCost Float
+  wastage       Float
+  overheads     Float
+  profitPercent Float
+  finalUnitRate Float
 
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate:Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
-
-
-
-
 model MaterialTakeOff {
-  id               String @id @default(uuid())
+  id               String    @id @default(uuid())
   projectId        String
-  boqItemId        String?     
+  boqItemId        String?
   materialName     String
   specification    String?
   unit             String
@@ -174,27 +162,24 @@ model MaterialTakeOff {
   deliveryLocation String?
   requiredDate     DateTime?
 
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate:Cascade)
-  boqItem BoqItem? @relation(fields: [boqItemId],references: [id],onDelete: SetNull,onUpdate:SetNull )
+  project Project  @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  boqItem BoqItem? @relation(fields: [boqItemId], references: [id], onDelete: SetNull, onUpdate: SetNull)
 }
 
-
-
 model LaborProductivity {
-  id               String @id @default(uuid())
+  id               String  @id @default(uuid())
   projectId        String
   trade            String
   activity         String
-  productivityRate Float   
+  productivityRate Float
   manHours         Float
   laborRatePerHour Float
   totalLaborCost   Float
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate:Cascade)
+  project          Project @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
-
 model EquipmentCost {
-  id             String @id @default(uuid())
+  id             String  @id @default(uuid())
   projectId      String
   equipmentName  String
   capacity       String?
@@ -203,67 +188,79 @@ model EquipmentCost {
   fuelCost       Float?
   operatorCost   Float?
   totalCost      Float
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate:Cascade)
+  project        Project @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
-
 model Report {
-  id            String   @id @default(uuid())
+  id            String       @id @default(uuid())
   projectId     String
-  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade,onUpdate:Cascade )
+  project       Project      @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   generatedById String
-  generatedBy   User     @relation(fields: [generatedById], references: [id])
-  version       Int      @default(1)
-  totalAmount   Float    
-  filePath      String   
+  generatedBy   User         @relation(fields: [generatedById], references: [id])
+  version       Int          @default(1)
+  totalAmount   Float
+  filePath      String
   status        ReportStatus @default(GENERATED)
-  createdAt     DateTime @default(now())
+  createdAt     DateTime     @default(now())
 }
 
 enum ReportStatus {
   GENERATED
   SENT
 }
+
 model Team {
-  id        String   @id @default(uuid())
+  id        String       @id @default(uuid())
   name      String
   ownerId   String
-  owner     User     @relation(fields: [ownerId], references: [id])
+  owner     User         @relation(fields: [ownerId], references: [id])
   members   TeamMember[]
-  createdAt DateTime @default(now())
+  invitation TeamInvitation[]
+  createdAt DateTime     @default(now())
 }
 
 model TeamMember {
-  id      String @id @default(uuid())
-  teamId  String
-  userId  String
-  role    TeamRole
-  team    Team @relation(fields: [teamId], references: [id], onDelete: Cascade,onUpdate: Cascade)
-  user    User @relation(fields: [userId], references: [id], onDelete: Cascade,onUpdate: Cascade)
+  id     String   @id @default(uuid())
+  teamId String
+  userId String
+  role   TeamRole
+  team   Team     @relation(fields: [teamId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
   @@unique([teamId, userId])
 }
+
+model TeamInvitation {
+  id        String   @id @default(uuid())
+  email     String
+  token     String   @unique
+  teamId    String
+  role      TeamRole @default(ESTIMATOR)
+  expiresAt DateTime
+  accepted  Boolean  @default(false)
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade,onUpdate:Cascade)
+
+  createdAt DateTime @default(now())
+}
+
 
 enum TeamRole {
   ESTIMATOR
   VIEWER
 }
 
-
-
 model Notification {
-  id            String   @id @default(uuid())
+  id            String           @id @default(uuid())
   type          NotificationType
-  recipientRole Role @default(ADMIN)
+  recipientRole Role             @default(ADMIN)
   payload       Json
-  isRead        Boolean  @default(false)
-  createdAt     DateTime @default(now())
+  isRead        Boolean          @default(false)
+  createdAt     DateTime         @default(now())
 }
-
 
 enum NotificationType {
   QS_REGISTERED
 }
-
 
 enum Role {
   ADMIN
@@ -294,6 +291,3 @@ enum DrawingFileType {
   PLN
   IFC
 }
-
-
-

@@ -8,17 +8,18 @@ import {
 import * as fs from 'fs';
 import * as path from 'path';
 import {
-  extractIFCDimensions,
-  generateDimensionSheets,
-  IFCDimensions,
-  DimensionSheetData,
+  extractIFCDimensions
 } from './ifc-extractor';
+import { DimensionSheetData,
+  generateDimensionSheets,
+} from './quantity-rules';
+import { IFCDimensions } from './types';
 
 @Injectable()
 export class DrawingService {
   constructor(private prisma: PrismaService) {}
 
-  // ✅ Create drawing with file
+ 
   async createWithFile(
     file: Express.Multer.File,
     data: {

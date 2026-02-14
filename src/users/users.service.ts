@@ -7,6 +7,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcryptjs';
 import { NotificationsService } from 'src/auth/notification.service';
+import { Role } from '@prisma/client';
 
 @Injectable()
 export class UsersService {
@@ -30,7 +31,7 @@ async createUser(dto: CreateUserDto) {
       lastName: dto.lastname,
       email: dto.email,
       phone: dto.phone ?? null,
-      role: dto.role ?? 'QS',
+      role: dto.role ? dto.role as Role:Role.ESTIMATOR,
       isActive: true,
       localAuth: {
         create: {
@@ -46,7 +47,7 @@ async createUser(dto: CreateUserDto) {
   });
 
   
-  if (user.role === 'QS') {
+  if (user.role === 'ESTIMATOR') {
     await this.notificationService.notifyAdminQSRegistered(user);
   }
 
@@ -134,7 +135,7 @@ async createGoogleUser(
         firstName,
         lastName,
         email,
-        role: 'QS', 
+        role: 'ESTIMATOR', 
         googleAuth: {
           create: { googleId, avatarUrl },
         },

@@ -1,65 +1,40 @@
-export interface IFCDimensions {
-  length: number | null;
-  width: number | null;
-  height: number | null;
-}
+import { IfcAPI, IFCWALL, IFCSLAB, IFCCOLUMN, IFCBEAM, IFCROOF } from 'web-ifc';
+import * as fs from 'fs';
+import { IFCDimensions } from './types';
 
+export async function extractIFCDimensions(filePath: string): Promise<IFCDimensions> {
+  const ifcAPI = new IfcAPI();
+  await ifcAPI.Init();
 
-export async function extractIFCDimensions(
-  _filePath: string
-): Promise<IFCDimensions> {
+  const buffer = fs.readFileSync(filePath);
+  const modelID = ifcAPI.OpenModel(buffer);
+
   
-  return {
-    length: 30.5,
-    width: 18.2,
-    height: 6.8,
-  };
-}
+  const elementTypes = [IFCWALL, IFCSLAB, IFCCOLUMN, IFCBEAM, IFCROOF];
 
-import { QuantityRules } from './quantity-rules';
+  let length = 0, width = 0, height = 0;
 
-export type DimensionSheetData = {
-  code: string;
-  description: string;
-  unit: string;
-  rate: number;
-  quantity: number;
-  total: number;
-  length?: number | null;
-  width?: number | null;
-  height?: number | null;
-};
-
-export function generateDimensionSheets(dim: IFCDimensions): DimensionSheetData[] {
-  return Object.entries(QuantityRules).map(([code, rule]) => {
-    let quantity = 0;
-
-    switch (rule.formula) {
-      case 'AREA':
-        quantity = (dim.length ?? 0) * (dim.width ?? 0);
-        break;
-      case 'L_H':
-        quantity = (dim.length ?? 0) * (dim.height ?? 0);
-        break;
-      case 'VOLUME':
-        quantity = (dim.length ?? 0) * (dim.width ?? 0) * (dim.height ?? 0);
-        break;
-      case 'MANUAL':
-        quantity = 1;
-        break;
+  for (const type of elementTypes) {
+    const ids = ifcAPI.GetLineIDsWithType(modelID, type);
+    for (const id of ids) {
+      const e = ifcAPI.GetLine(modelID, id);
+      if (e?.Representation?.[0]?.Items) {
+        for (const geom of e.Representation[0].Items) {
+          if (geom.Points) {
+            for (let i = 0; i < geom.Points.length; i += 3) {
+              const x = geom.Points[i];
+              const y = geom.Points[i + 1];
+              const z = geom.Points[i + 2];
+              length = Math.max(length, x);
+              width = Math.max(width, y);
+              height = Math.max(height, z);
+            }
+          }
+        }
+      }
     }
+  }
 
-    return {
-      code,
-      description: rule.description,
-      unit: rule.unit,
-      rate: rule.rate,
-      quantity,
-      total: quantity * rule.rate,
-      length: dim.length,
-      width: dim.width,
-      height: dim.height,
-    };
-  });
+  ifcAPI.CloseModel(modelID);
+  return { length, width, height };
 }
-

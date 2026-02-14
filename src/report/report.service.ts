@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { ReportStatus } from '@prisma/client';
 
 @Injectable()
 export class ReportService {
@@ -13,15 +14,15 @@ export class ReportService {
       },
     });
 
-    if (!project) throw new NotFoundException('Project not found');
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
 
-    // Calculate total
     const totalAmount = project.boqItems.reduce(
       (sum, item) => sum + item.amount,
       0,
     );
 
-    // Get latest version
     const latest = await this.prisma.report.findFirst({
       where: { projectId },
       orderBy: { version: 'desc' },
@@ -29,18 +30,16 @@ export class ReportService {
 
     const nextVersion = latest ? latest.version + 1 : 1;
 
-    const report = await this.prisma.report.create({
+    return this.prisma.report.create({
       data: {
         projectId,
         generatedById: userId,
         version: nextVersion,
         totalAmount,
         filePath: `reports/project-${projectId}-v${nextVersion}.pdf`,
-        status: 'GENERATED',
+        status: ReportStatus.GENERATED, 
       },
     });
-
-    return report;
   }
 
   async sendReport(reportId: string) {
@@ -48,11 +47,15 @@ export class ReportService {
       where: { id: reportId },
     });
 
-    if (!report) throw new NotFoundException('Report not found');
+    if (!report) {
+      throw new NotFoundException('Report not found');
+    }
 
     return this.prisma.report.update({
       where: { id: reportId },
-      data: { status: 'SENT' },
+      data: {
+        status: ReportStatus.SENT, 
+      },
     });
   }
 
@@ -63,3 +66,4 @@ export class ReportService {
     });
   }
 }
+
