@@ -208,6 +208,10 @@ enum ReportStatus {
   GENERATED
   SENT
 }
+enum TeamRole {
+  ESTIMATOR
+  VIEWER
+}
 
 model Team {
   id        String       @id @default(uuid())

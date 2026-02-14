@@ -1,4 +1,6 @@
 -- CreateTable
+
+
 CREATE TABLE "TeamInvitation" (
     "id" TEXT NOT NULL,
     "email" TEXT NOT NULL,
