@@ -200,5 +200,27 @@ async loginOrRegisterGoogle({
   return { user, token };
 }
 
+async getMe(token: string) {
+  try {
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || 'secretkey',
+    ) as { id: string; email: string; role: string };
+
+    const user = await this.usersService.findByEmailOrFail(decoded.email);
+
+    return {
+      id: user.id,
+      name: `${user.firstName} ${user.lastName}`,
+      email: user.email,
+      role: user.role,
+      avatar: user.googleAuth?.avatarUrl || null,
+      lastLogin: user.updatedAt,
+    };
+  } catch (error) {
+    throw new UnauthorizedException('Invalid or expired token');
+  }
+}
+
 
 }

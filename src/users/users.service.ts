@@ -35,8 +35,8 @@ export class UsersService {
 
   
   async startSignup(dto: {
-    firstname: string;
-    lastname: string;
+    firstName: string;
+    lastName: string;
     email: string;
     phone?: string;
     role?: Role;
@@ -56,8 +56,8 @@ export class UsersService {
       otp,
       expires,
       data: {
-        firstName: dto.firstname,
-        lastName: dto.lastname,
+        firstName: dto.firstName,
+        lastName: dto.lastName,
         email: dto.email,
         phone: dto.phone,
         role: dto.role ?? Role.ESTIMATOR,
@@ -96,7 +96,7 @@ export class UsersService {
     <!-- Body -->
     <div style="padding:30px;color:#1f2937;font-size:15px;line-height:1.7;">
       <p style="margin-top:0;">
-        Hello <strong>${dto.firstname || 'there'}</strong>,
+        Hello <strong>${dto.firstName || 'there'}</strong>,
       </p>
 
       <p>

@@ -1,4 +1,4 @@
-import { Body, Controller, Post,Get, Req } from '@nestjs/common';
+import { Body, Controller, Post,Get, Req, UnauthorizedException,Headers } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from '../users/dto/login.dto';
 import { AuthGuard } from '@nestjs/passport';
@@ -13,7 +13,7 @@ export class AuthController {
     return this.authService.login(dto);
   }
 
-  
+
   @Post('verify-otp')
   async verifyOtp(
     @Body() body: { email: string; otp: string },
@@ -33,6 +33,20 @@ export class AuthController {
   async googleCallback(@Req() req: any) {
     
     return req.user; 
+  }
+
+   @Get('me')
+  async getMe(@Headers('authorization') authHeader: string) {
+    if (!authHeader) {
+      throw new UnauthorizedException('No token provided');
+    }
+
+    const token = authHeader.split(' ')[1];
+    if (!token) {
+      throw new UnauthorizedException('Invalid token format');
+    }
+
+    return this.authService.getMe(token);
   }
 }
 
