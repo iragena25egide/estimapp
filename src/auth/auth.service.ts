@@ -204,7 +204,7 @@ async getMe(token: string) {
   try {
     const decoded = jwt.verify(
       token,
-      process.env.JWT_SECRET || 'secretkey',
+      process.env.SECRET_KEY || 'secretkey',
     ) as { id: string; email: string; role: string };
 
     const user = await this.usersService.findByEmailOrFail(decoded.email);
