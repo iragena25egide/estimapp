@@ -46,4 +46,15 @@ export class ProjectController {
   remove(@Param('id') id: string, @Req() req) {
     return this.projectService.remove(id, req.user.id);
   }
+
+  @Get('recent')
+  async getRecentProjects(@Req() req: any) {
+    return this.projectService.getRecentProjects(req.user.id);
+  }
+
+
+  @Get('count')
+  async countProjects(@Req() req: any) {
+    return this.projectService.countMyProjects(req.user.id);
+  }
 }

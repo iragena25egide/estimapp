@@ -138,4 +138,44 @@ export class ProjectService {
       );
     }
   }
+
+
+  
+async getRecentProjects(userId: string, limit = 5) {
+  try {
+    return await this.prisma.project.findMany({
+      where: { createdById: userId },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+      select: {
+        id: true,
+        name: true,
+        client: true,
+        location: true,
+        projectType: true,
+        createdAt: true,
+      },
+    });
+  } catch (error) {
+    throw new InternalServerErrorException(
+      'Failed to fetch recent projects: ' + error.message,
+    );
+  }
+}
+
+
+// Count projects for logged-in user
+async countMyProjects(userId: string) {
+  try {
+    const total = await this.prisma.project.count({
+      where: { createdById: userId },
+    });
+
+    return { totalProjects: total };
+  } catch (error) {
+    throw new InternalServerErrorException(
+      'Failed to count projects: ' + error.message,
+    );
+  }
+}
 }
