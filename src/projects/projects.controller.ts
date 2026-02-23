@@ -22,6 +22,16 @@ export class ProjectController {
   create(@Req() req, @Body() dto: any) {
     return this.projectService.create(dto, req.user.id);
   }
+  @Get('recent')
+  async getRecentProjects(@Req() req: any) {
+    return this.projectService.getRecentProjects(req.user.id);
+  }
+
+
+  @Get('count')
+  async countProjects(@Req() req: any) {
+    return this.projectService.countMyProjects(req.user.id);
+  }
 
   @Get('my')
   findMy(@Req() req) {
@@ -47,14 +57,5 @@ export class ProjectController {
     return this.projectService.remove(id, req.user.id);
   }
 
-  @Get('recent')
-  async getRecentProjects(@Req() req: any) {
-    return this.projectService.getRecentProjects(req.user.id);
-  }
-
-
-  @Get('count')
-  async countProjects(@Req() req: any) {
-    return this.projectService.countMyProjects(req.user.id);
-  }
+  
 }

@@ -12,7 +12,7 @@ export class JwtAuthGuard implements CanActivate {
     if (!token) throw new UnauthorizedException('Invalid token');
 
     try {
-      const payload = jwt.verify(token, process.env.JWT_SECRET || 'secretkey');
+      const payload = jwt.verify(token, process.env.SECRET_KEY || 'secretkey');
       request.user = payload;
       return true;
     } catch {

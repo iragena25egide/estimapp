@@ -108,7 +108,7 @@ export class AuthService {
         border-radius:6px;
         margin:24px 0;
       ">
-        ⚠️ If you did not request this OTP, please ignore this email.
+         If you did not request this OTP, please ignore this email.
       </p>
 
       <p>

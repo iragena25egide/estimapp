@@ -167,11 +167,21 @@ async getRecentProjects(userId: string, limit = 5) {
 // Count projects for logged-in user
 async countMyProjects(userId: string) {
   try {
-    const total = await this.prisma.project.count({
+    const totalProjects = await this.prisma.project.count({
       where: { createdById: userId },
     });
 
-    return { totalProjects: total };
+    const activeProjects = await this.prisma.project.count({
+      where: {
+        createdById: userId
+      },
+    });
+
+    return {
+      totalProjects,
+      activeProjects,
+    };
+
   } catch (error) {
     throw new InternalServerErrorException(
       'Failed to count projects: ' + error.message,
