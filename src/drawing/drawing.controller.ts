@@ -48,34 +48,28 @@ export class DrawingController {
       projectId: body.projectId,
       drawingNo: body.drawingNo,
       title: body.title,
-      discipline: body.discipline, // ✅ enum-safe
+      discipline: body.discipline, 
       revision: body.revision,
       issueDate: body.issueDate,
       scale: body.scale,
-      status: body.status, // ✅ enum-safe
+      status: body.status, 
       fileType: body.fileType,
     });
   }
 
-  // =====================================
-  // FIND BY PROJECT
-  // =====================================
+  
   @Get('project/:projectId')
   async findByProject(@Param('projectId') projectId: string) {
     return this.drawingService.findByProject(projectId);
   }
 
-  // =====================================
-  // FIND ONE
-  // =====================================
+  
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return this.drawingService.findOne(id);
   }
 
-  // =====================================
-  // UPDATE DRAWING (NO FILE)
-  // =====================================
+  
   @Patch(':id')
   async update(
     @Param('id') id: string,
@@ -101,16 +95,9 @@ export class DrawingController {
     });
   }
 
-  // =====================================
-  // DELETE
-  // =====================================
+  
   @Delete(':id')
   async remove(@Param('id') id: string) {
     return this.drawingService.remove(id);
-  }
-
-
-
-  
-  
+  } 
 }
