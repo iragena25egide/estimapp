@@ -22,6 +22,13 @@ export class ProjectController {
   create(@Req() req, @Body() dto: any) {
     return this.projectService.create(dto, req.user.id);
   }
+
+  @Get('drawing-summary')
+  async getProjectDrawingSummary(@Req() req) {
+    const userId = req.user.id;
+    return this.projectService.getProjectDrawingSummary(userId);
+  }
+  
   @Get('recent')
   async getRecentProjects(@Req() req: any) {
     return this.projectService.getRecentProjects(req.user.id);
@@ -52,10 +59,14 @@ export class ProjectController {
     return this.projectService.update(id, dto, req.user.id);
   }
 
+
+
   @Delete(':id')
   remove(@Param('id') id: string, @Req() req) {
     return this.projectService.remove(id, req.user.id);
   }
+
+  
 
   
 }

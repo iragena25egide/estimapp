@@ -164,7 +164,7 @@ async getRecentProjects(userId: string, limit = 5) {
 }
 
 
-// Count projects for logged-in user
+
 async countMyProjects(userId: string) {
   try {
     const totalProjects = await this.prisma.project.count({
@@ -185,6 +185,40 @@ async countMyProjects(userId: string) {
   } catch (error) {
     throw new InternalServerErrorException(
       'Failed to count projects: ' + error.message,
+    );
+  }
+}
+
+
+
+async getProjectDrawingSummary(userId: string) {
+  try {
+
+    const projects = await this.prisma.project.findMany({
+      where: { createdById: userId },
+      select: {
+        id: true,
+        name: true,
+        client: true,
+        _count: {
+          select: {
+            drawings: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return projects.map(project => ({
+      projectId: project.id,
+      projectName: project.name,
+      client: project.client,
+      drawingCount: project._count.drawings,
+    }));
+
+  } catch (error) {
+    throw new InternalServerErrorException(
+      'Failed to fetch project drawing summary: ' + error.message,
     );
   }
 }

@@ -108,4 +108,9 @@ export class DrawingController {
   async remove(@Param('id') id: string) {
     return this.drawingService.remove(id);
   }
+
+
+
+  
+  
 }
