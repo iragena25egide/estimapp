@@ -14,35 +14,46 @@ export class LaborProductivityService {
 
   
   async create(data: CreateLaborDto) {
-    try {
-      
-      const project = await this.prisma.project.findUnique({
-        where: { id: data.projectId },
-      });
-      if (!project) throw new NotFoundException('Project not found');
+  try {
+    const project = await this.prisma.project.findUnique({
+      where: { id: data.projectId },
+    });
 
-     
-      const calculatedTotal = data.manHours * data.laborRatePerHour * (data.productivityRate / 100);
-      if (data.totalLaborCost !== calculatedTotal) {
-        throw new BadRequestException(
-          `Total labor cost (${data.totalLaborCost}) does not match calculated value (${calculatedTotal})`,
-        );
-      }
+    if (!project) throw new NotFoundException('Project not found');
 
-      
-      return await this.prisma.laborProductivity.create({
-        data,
-      });
-    } catch (err) {
-      if (
-        err instanceof NotFoundException ||
-        err instanceof BadRequestException ||
-        err instanceof InternalServerErrorException
-      )
-        throw err;
-      throw new InternalServerErrorException('Failed to create labor productivity: ' + err.message);
+    const calculatedTotal =
+      data.manHours * data.laborRatePerHour * (data.productivityRate / 100);
+
+    if (Math.abs(data.totalLaborCost - calculatedTotal) > 0.01) {
+      throw new BadRequestException(
+        `Total labor cost (${data.totalLaborCost}) does not match calculated value (${calculatedTotal})`,
+      );
     }
+
+    return await this.prisma.laborProductivity.create({
+      data: {
+        projectId: data.projectId,
+        trade: data.trade,
+        activity: data.activity,
+        productivityRate: data.productivityRate,
+        manHours: data.manHours,
+        laborRatePerHour: data.laborRatePerHour,
+        totalLaborCost: data.totalLaborCost,
+      },
+    });
+  } catch (err) {
+    if (
+      err instanceof NotFoundException ||
+      err instanceof BadRequestException
+    ) {
+      throw err;
+    }
+
+    throw new InternalServerErrorException(
+      'Failed to create labor productivity: ' + err.message,
+    );
   }
+}
 
   async findAll(projectId: string) {
     try {
@@ -70,29 +81,43 @@ export class LaborProductivityService {
   }
 
   
-  async update(id: string, data: Partial<CreateLaborDto>) {
-    try {
-      const existing = await this.findOne(id);
+ async update(id: string, data: Partial<CreateLaborDto>) {
+  try {
+    const existing = await this.findOne(id);
 
-           const productivityRate = data.productivityRate ?? existing.productivityRate;
-      const manHours = data.manHours ?? existing.manHours;
-      const laborRatePerHour = data.laborRatePerHour ?? existing.laborRatePerHour;
+    const productivityRate =
+      data.productivityRate ?? existing.productivityRate;
 
-      const calculatedTotal = manHours * laborRatePerHour * (productivityRate / 100);
-      const totalLaborCost = data.totalLaborCost ?? calculatedTotal;
+    const manHours = data.manHours ?? existing.manHours;
 
-      return await this.prisma.laborProductivity.update({
-        where: { id },
-        data: {
-          ...data,
-          totalLaborCost,
-        },
-      });
-    } catch (err) {
-      if (err instanceof NotFoundException) throw err;
-      throw new InternalServerErrorException('Failed to update labor record: ' + err.message);
-    }
+    const laborRatePerHour =
+      data.laborRatePerHour ?? existing.laborRatePerHour;
+
+    const calculatedTotal =
+      manHours * laborRatePerHour * (productivityRate / 100);
+
+    const totalLaborCost = data.totalLaborCost ?? calculatedTotal;
+
+    return await this.prisma.laborProductivity.update({
+      where: { id },
+      data: {
+        projectId: data.projectId ?? existing.projectId,
+        trade: data.trade ?? existing.trade,
+        activity: data.activity ?? existing.activity,
+        productivityRate,
+        manHours,
+        laborRatePerHour,
+        totalLaborCost,
+      },
+    });
+  } catch (err) {
+    if (err instanceof NotFoundException) throw err;
+
+    throw new InternalServerErrorException(
+      'Failed to update labor record: ' + err.message,
+    );
   }
+}
 
   
   async remove(id: string) {
