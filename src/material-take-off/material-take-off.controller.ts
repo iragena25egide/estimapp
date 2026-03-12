@@ -1,7 +1,7 @@
 import { Controller, Post, Get, Patch, Delete, Param, Body, Query } from '@nestjs/common';
 import { MaterialTakeOffService } from './material-take-off.service';
 
-@Controller('material-takeoff')
+@Controller('estimaApp/material-takeoff')
 export class MaterialTakeOffController {
   constructor(private readonly service: MaterialTakeOffService) {}
 

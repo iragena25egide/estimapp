@@ -3,7 +3,7 @@ import { EquipmentService } from './equipment-cost.service';
 
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
-@Controller('equipment-cost')
+@Controller('estimaApp/equipment-cost')
 @UseGuards(JwtAuthGuard)
 export class EquipmentCostController {
   constructor(private readonly service: EquipmentService) {}

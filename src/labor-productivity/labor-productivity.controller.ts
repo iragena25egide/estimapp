@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
 import { LaborProductivityService } from './labor-productivity.service';
 
-@Controller('labor-productivity')
+@Controller('estimaApp/labor-productivity')
 export class LaborProductivityController {
   constructor(private readonly service: LaborProductivityService) {}
 
