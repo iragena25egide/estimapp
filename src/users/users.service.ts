@@ -64,103 +64,73 @@ export class UsersService {
       },
     });
 
-    await this.emailService.sendEmail({
-      to: dto.email,
-      subject: 'estimAPP || Verify Your Email',
-      html: `
-<div style="background:#f1f5f9;padding:40px 0;font-family:Arial,Helvetica,sans-serif;">
-  <div style="
-    max-width:520px;
-    margin:auto;
-    background:#ffffff;
-    border-radius:10px;
-    overflow:hidden;
-    box-shadow:0 10px 30px rgba(0,0,0,0.08);
-  ">
-
-    <!-- Header -->
-    <div style="
-      background:linear-gradient(135deg,#2563eb,#1e40af);
-      color:#ffffff;
-      padding:26px;
-      text-align:center;
-    ">
-      <div style="font-size:24px;font-weight:bold;letter-spacing:0.5px;">
-        estimAPP
-      </div>
-      <div style="font-size:14px;opacity:0.9;margin-top:6px;">
-        Secure Login Verification
-      </div>
+   await this.emailService.sendEmail({
+  to: dto.email,
+  subject: 'estimAPP || Verify Your Email',
+  html: `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify your email</title>
+</head>
+<body style="margin:0; padding:0; background:#f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <div style="max-width:600px; margin:40px auto; background:#ffffff; border-radius:24px; overflow:hidden; box-shadow:0 20px 40px -10px rgba(0,0,0,0.15);">
+    
+    <!-- Header with app gradient -->
+    <div style="background:linear-gradient(135deg, #2563eb 0%, #1e40af 100%); padding:32px 24px; text-align:center;">
+      <div style="font-size:28px; font-weight:700; color:#ffffff; letter-spacing:-0.5px; margin-bottom:4px;">estimAPP</div>
+      <div style="font-size:15px; color:#e0e7ff; font-weight:400;">Secure Login Verification</div>
     </div>
 
-    <!-- Body -->
-    <div style="padding:30px;color:#1f2937;font-size:15px;line-height:1.7;">
-      <p style="margin-top:0;">
-        Hello <strong>${dto.firstName || 'there'}</strong>,
+    <!-- Main content -->
+    <div style="padding:32px 28px; color:#1f2937;">
+      <p style="margin-top:0; font-size:16px; line-height:1.6;">
+        Hello <strong style="color:#2563eb;">${dto.firstName || 'there'}</strong>,
+      </p>
+      <p style="font-size:16px; line-height:1.6; margin:20px 0;">
+        You requested a one‑time password (OTP) to access your estimAPP account. Use the code below to complete your login.
       </p>
 
-      <p>
-        You requested a one-time password (OTP) to access your
-        <strong>estima App</strong> account.
-      </p>
-
-      <!-- OTP Box -->
-      <div style="
-        text-align:center;
-        margin:35px 0;
-      ">
-        <div style="
-          display:inline-block;
-          background:#eff6ff;
-          border:1px solid #bfdbfe;
-          color:#1d4ed8;
-          font-size:32px;
-          font-weight:bold;
-          letter-spacing:8px;
-          padding:18px 34px;
-          border-radius:10px;
-        ">
+      <!-- OTP card -->
+      <div style="background:#f8fafc; border-radius:16px; padding:28px 20px; margin:28px 0; text-align:center; border:1px solid #e2e8f0;">
+        <div style="font-size:14px; font-weight:500; color:#64748b; letter-spacing:0.5px; margin-bottom:12px;">YOUR VERIFICATION CODE</div>
+        <div style="font-size:44px; font-weight:700; color:#2563eb; letter-spacing:8px; background:#ffffff; padding:16px 24px; display:inline-block; border-radius:12px; box-shadow:0 4px 10px rgba(37,99,235,0.1); border:1px solid #bfdbfe;">
           ${otp}
+        </div>
+        <div style="margin-top:18px; font-size:14px; color:#475569;">
+          This code will expire in <strong style="color:#2563eb;">5 minutes</strong>.
         </div>
       </div>
 
-      <p style="text-align:center;font-size:14px;color:#374151;">
-        This code will expire in <strong>5 minutes</strong>.
-      </p>
+      <!-- Security notice -->
+      <div style="background:#fff7ed; border-left:4px solid #f97316; padding:16px 18px; border-radius:12px; margin:28px 0; font-size:14px; color:#7b341e;">
+        <strong style="display:block; margin-bottom:6px; color:#c2410c;"> Did not request this?</strong>
+        If you didn't ask for this OTP, you can safely ignore this email. Someone may have typed your email by mistake.
+      </div>
 
-      <p style="
-        background:#fef2f2;
-        border-left:4px solid #dc2626;
-        padding:12px 14px;
-        font-size:13px;
-        color:#7f1d1d;
-        border-radius:6px;
-        margin:24px 0;
-      ">
-         If you did not request this OTP, please ignore this email.
-      </p>
-
-      <p>
+      <p style="font-size:16px; line-height:1.6; margin:24px 0 12px;">
         Regards,<br />
-        <strong>The estimAPP Team</strong>
+        <strong style="color:#2563eb;">The estimAPP Team</strong>
       </p>
     </div>
 
     <!-- Footer -->
-    <div style="
-      background:#f8fafc;
-      padding:14px;
-      text-align:center;
-      font-size:12px;
-      color:#64748b;
-    ">
-      © ${new Date().getFullYear()} estimAPP · All rights reserved
+    <div style="background:#f9fafb; padding:18px 24px; text-align:center; border-top:1px solid #e5e7eb;">
+      <p style="margin:0; font-size:13px; color:#6b7280;">
+        © ${new Date().getFullYear()} estimAPP · All rights reserved
+      </p>
+      <p style="margin:6px 0 0; font-size:12px; color:#9ca3af;">
+        This is an automated message, please do not reply.
+      </p>
     </div>
 
   </div>
-</div>
-`,
-    });
+</body>
+</html>
+  `,
+});
 
     return { message: 'Verification code sent to email' };
   }
