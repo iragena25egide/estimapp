@@ -106,7 +106,7 @@ export class UsersService {
 
       <!-- Security notice -->
       <div style="background:#fff7ed; border-left:4px solid #f97316; padding:16px 18px; border-radius:12px; margin:28px 0; font-size:14px; color:#7b341e;">
-        <strong style="display:block; margin-bottom:6px; color:#c2410c;"> Did not request this?</strong>
+        
         If you didn't ask for this OTP, you can safely ignore this email. Someone may have typed your email by mistake.
       </div>
 
