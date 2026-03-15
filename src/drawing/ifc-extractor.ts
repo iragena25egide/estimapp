@@ -61,7 +61,7 @@ export async function extractIFCDimensions(filePath: string): Promise<IFCDimensi
     for (let i = 0; i < ids.size(); i++) {
       const expressID = ids.get(i);
 
-      // Get the element’s placement transformation matrix
+      
       const matrix = ifcAPI.GetCoordinationMatrix(modelID, expressID);
 
       // Get the element’s geometry
