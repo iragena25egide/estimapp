@@ -82,7 +82,7 @@ export async function extractIFCDimensions(filePath: string): Promise<IFCDimensi
     return { length: null, width: null, height: null };
   }
 
-  // Overall dimensions = max - min
+  
   const length = maxX - minX;
   const width  = maxY - minY;
   const height = maxZ - minZ;
