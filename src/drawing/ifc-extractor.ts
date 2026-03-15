@@ -78,7 +78,7 @@ export async function extractIFCDimensions(filePath: string): Promise<IFCDimensi
   ifcAPI.CloseModel(modelID);
 
   if (!hasElements) {
-    // No elements of the listed types found
+    
     return { length: null, width: null, height: null };
   }
 
