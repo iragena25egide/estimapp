@@ -110,9 +110,9 @@ export async function extractIFCDimensions(filePath: string): Promise<IFCDimensi
 
 // Helper function to apply a 4x4 transformation matrix to a point
 function applyMatrixToPoint(matrix: number[], x: number, y: number, z: number): { x: number; y: number; z: number } {
-  // matrix is a 16-element array in column-major order (like WebGL)
+  
   const m = matrix;
-  const w = m[3] * x + m[7] * y + m[11] * z + m[15]; // usually 1
+  const w = m[3] * x + m[7] * y + m[11] * z + m[15]; 
   return {
     x: (m[0] * x + m[4] * y + m[8]  * z + m[12]) / w,
     y: (m[1] * x + m[5] * y + m[9]  * z + m[13]) / w,
