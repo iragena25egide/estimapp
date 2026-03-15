@@ -58,7 +58,7 @@ export async function extractIFCDimensions(filePath: string): Promise<IFCDimensi
   let hasElements = false;
 
   for (const type of elementTypes) {
-    // GetLineIDsWithType returns an iterator with size() and get(index)
+   
     const ids = ifcAPI.GetLineIDsWithType(modelID, type);
     for (let i = 0; i < ids.size(); i++) {
       const id = ids.get(i);
