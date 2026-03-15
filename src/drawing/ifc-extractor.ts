@@ -50,42 +50,72 @@ export async function extractIFCDimensions(filePath: string): Promise<IFCDimensi
   const buffer = fs.readFileSync(filePath);
   const modelID = ifcAPI.OpenModel(buffer);
 
- 
   const elementTypes = [IFCWALL, IFCSLAB, IFCCOLUMN, IFCBEAM, IFCROOF];
 
   let minX = Infinity, minY = Infinity, minZ = Infinity;
   let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
-  let hasElements = false;
+  let hasGeometry = false;
 
   for (const type of elementTypes) {
-   
     const ids = ifcAPI.GetLineIDsWithType(modelID, type);
     for (let i = 0; i < ids.size(); i++) {
-      const id = ids.get(i);
-      const bbox = ifcAPI.GetBoundingBox(modelID, id);
-      if (bbox) {
-        hasElements = true;
-        if (bbox.minX < minX) minX = bbox.minX;
-        if (bbox.minY < minY) minY = bbox.minY;
-        if (bbox.minZ < minZ) minZ = bbox.minZ;
-        if (bbox.maxX > maxX) maxX = bbox.maxX;
-        if (bbox.maxY > maxY) maxY = bbox.maxY;
-        if (bbox.maxZ > maxZ) maxZ = bbox.maxZ;
+      const expressID = ids.get(i);
+
+      // Get the element’s placement transformation matrix
+      const matrix = ifcAPI.GetCoordinationMatrix(modelID, expressID);
+
+      // Get the element’s geometry
+      const geometries = ifcAPI.GetGeometryIDsForElement(modelID, expressID);
+      for (let j = 0; j < geometries.size(); j++) {
+        const geomID = geometries.get(j);
+        const geom = ifcAPI.GetGeometry(modelID, geomID);
+
+        // Get vertex data
+        const vertexData = ifcAPI.GetVertexArray(geom);
+        // vertexData is a Float32Array of [x,y,z,x,y,z,...]
+        for (let k = 0; k < vertexData.length; k += 3) {
+          const localX = vertexData[k];
+          const localY = vertexData[k + 1];
+          const localZ = vertexData[k + 2];
+
+          // Transform to world coordinates using the placement matrix
+          const world = applyMatrixToPoint(matrix, localX, localY, localZ);
+
+          minX = Math.min(minX, world.x);
+          minY = Math.min(minY, world.y);
+          minZ = Math.min(minZ, world.z);
+          maxX = Math.max(maxX, world.x);
+          maxY = Math.max(maxY, world.y);
+          maxZ = Math.max(maxZ, world.z);
+
+          hasGeometry = true;
+        }
       }
     }
   }
 
   ifcAPI.CloseModel(modelID);
 
-  if (!hasElements) {
-    
+  if (!hasGeometry) {
     return { length: null, width: null, height: null };
   }
 
-  
-  const length = maxX - minX;
-  const width  = maxY - minY;
-  const height = maxZ - minZ;
+  // IFC default unit is millimetre; convert to metres if needed
+  const length = (maxX - minX) / 1000;
+  const width  = (maxY - minY) / 1000;
+  const height = (maxZ - minZ) / 1000;
 
   return { length, width, height };
+}
+
+// Helper function to apply a 4x4 transformation matrix to a point
+function applyMatrixToPoint(matrix: number[], x: number, y: number, z: number): { x: number; y: number; z: number } {
+  // matrix is a 16-element array in column-major order (like WebGL)
+  const m = matrix;
+  const w = m[3] * x + m[7] * y + m[11] * z + m[15]; // usually 1
+  return {
+    x: (m[0] * x + m[4] * y + m[8]  * z + m[12]) / w,
+    y: (m[1] * x + m[5] * y + m[9]  * z + m[13]) / w,
+    z: (m[2] * x + m[6] * y + m[10] * z + m[14]) / w,
+  };
 }
