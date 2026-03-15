@@ -70,7 +70,7 @@ export async function extractIFCDimensions(filePath: string): Promise<IFCDimensi
         const geomID = geometries.get(j);
         const geom = ifcAPI.GetGeometry(modelID, geomID);
 
-        // Get vertex data
+       
         const vertexData = ifcAPI.GetVertexArray(geom);
         // vertexData is a Float32Array of [x,y,z,x,y,z,...]
         for (let k = 0; k < vertexData.length; k += 3) {
