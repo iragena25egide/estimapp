@@ -50,7 +50,7 @@ export async function extractIFCDimensions(filePath: string): Promise<IFCDimensi
   const buffer = fs.readFileSync(filePath);
   const modelID = ifcAPI.OpenModel(buffer);
 
-  // IFC types we care about
+ 
   const elementTypes = [IFCWALL, IFCSLAB, IFCCOLUMN, IFCBEAM, IFCROOF];
 
   let minX = Infinity, minY = Infinity, minZ = Infinity;
