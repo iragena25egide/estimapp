@@ -108,7 +108,7 @@ export async function extractIFCDimensions(filePath: string): Promise<IFCDimensi
   return { length, width, height };
 }
 
-// Helper function to apply a 4x4 transformation matrix to a point
+
 function applyMatrixToPoint(matrix: number[], x: number, y: number, z: number): { x: number; y: number; z: number } {
   
   const m = matrix;
