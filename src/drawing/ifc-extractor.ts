@@ -100,7 +100,7 @@ export async function extractIFCDimensions(filePath: string): Promise<IFCDimensi
     return { length: null, width: null, height: null };
   }
 
-  // IFC default unit is millimetre; convert to metres if needed
+  
   const length = (maxX - minX) / 1000;
   const width  = (maxY - minY) / 1000;
   const height = (maxZ - minZ) / 1000;
