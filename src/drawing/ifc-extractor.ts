@@ -78,7 +78,7 @@ export async function extractIFCDimensions(filePath: string): Promise<IFCDimensi
           const localY = vertexData[k + 1];
           const localZ = vertexData[k + 2];
 
-          // Transform to world coordinates using the placement matrix
+         
           const world = applyMatrixToPoint(matrix, localX, localY, localZ);
 
           minX = Math.min(minX, world.x);
