@@ -64,7 +64,7 @@ export async function extractIFCDimensions(filePath: string): Promise<IFCDimensi
       
       const matrix = ifcAPI.GetCoordinationMatrix(modelID, expressID);
 
-      // Get the element’s geometry
+     
       const geometries = ifcAPI.GetGeometryIDsForElement(modelID, expressID);
       for (let j = 0; j < geometries.size(); j++) {
         const geomID = geometries.get(j);
