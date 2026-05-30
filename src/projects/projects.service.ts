@@ -6,10 +6,14 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProjectDto } from './validation-project';
+import { NotificationsService } from '../auth/notification.service';
 
 @Injectable()
 export class ProjectService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationsService: NotificationsService,
+  ) {}
 
   async verifyAccess(projectId: string, userId: string, requireWrite = false): Promise<void> {
     const user = await this.prisma.user.findUnique({
@@ -54,7 +58,7 @@ export class ProjectService {
   
   async create(dto: CreateProjectDto, userId: string) {
     try {
-      return await this.prisma.project.create({
+      const project = await this.prisma.project.create({
         data: {
           name: dto.name,
           client: dto.client ?? null,
@@ -72,6 +76,11 @@ export class ProjectService {
           },
         },
       });
+
+      // Notify admin
+      this.notificationsService.notifyAdminActivity(userId, `created a new project: "${project.name}"`);
+
+      return project;
     } catch (error) {
       throw new InternalServerErrorException(
         'Failed to create project: ' + error.message,
@@ -171,7 +180,7 @@ export class ProjectService {
     try {
       await this.verifyAccess(id, userId, true);
 
-      return await this.prisma.project.update({
+      const project = await this.prisma.project.update({
         where: { id },
         data: {
           ...dto,
@@ -183,6 +192,11 @@ export class ProjectService {
             : undefined,
         },
       });
+
+      // Notify admin
+      this.notificationsService.notifyAdminActivity(userId, `updated project: "${project.name}"`);
+
+      return project;
     } catch (error) {
       if (
         error instanceof NotFoundException ||
@@ -202,9 +216,14 @@ export class ProjectService {
     try {
       await this.verifyAccess(id, userId, true);
 
-      return await this.prisma.project.delete({
+      const project = await this.prisma.project.delete({
         where: { id },
       });
+
+      // Notify admin
+      this.notificationsService.notifyAdminActivity(userId, `deleted project: "${project.name}"`);
+
+      return project;
     } catch (error) {
       if (error instanceof NotFoundException || error instanceof ForbiddenException) throw error;
 
