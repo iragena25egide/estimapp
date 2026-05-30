@@ -37,4 +37,19 @@ export class ReportController {
       });
     }
   }
+
+  @Get('project/:projectId/excel')
+  async downloadExcel(@Param('projectId') projectId: string, @Req() req: any, @Res() res: any) {
+    try {
+      const buffer = await this.reportService.generateExcelReport(projectId, req.user.id);
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename=boq-estimate-${projectId}.xlsx`);
+      res.end(buffer);
+    } catch (err) {
+      res.status(err.status || 500).json({
+        success: false,
+        message: err.message || 'Failed to download Excel report file',
+      });
+    }
+  }
 }
