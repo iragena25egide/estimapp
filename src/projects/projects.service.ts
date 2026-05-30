@@ -177,9 +177,69 @@ async countMyProjects(userId: string) {
       },
     });
 
+    const totalEstimations = await this.prisma.boqItem.count({
+      where: {
+        project: { createdById: userId }
+      }
+    });
+
+    const reportsGenerated = await this.prisma.report.count({
+      where: {
+        project: { createdById: userId }
+      }
+    });
+
+    const teamMembersResult = await this.prisma.teamMember.groupBy({
+      by: ['userId'],
+      where: {
+        team: { ownerId: userId }
+      }
+    });
+    const teamMembers = teamMembersResult.length;
+
+    const totalValueAggregate = await this.prisma.boqItem.aggregate({
+      _sum: {
+        amount: true
+      },
+      where: {
+        project: { createdById: userId }
+      }
+    });
+    const totalProjectValue = totalValueAggregate._sum.amount ?? 0;
+
+    const boqs = await this.prisma.boqItem.findMany({
+      where: {
+        project: { createdById: userId }
+      },
+      select: {
+        quantity: true,
+        materialRate: true,
+        laborRate: true,
+        equipmentRate: true
+      }
+    });
+
+    let materialCost = 0, laborCost = 0, equipmentCost = 0;
+    for (const b of boqs) {
+      materialCost += b.materialRate * b.quantity;
+      laborCost += b.laborRate * b.quantity;
+      equipmentCost += b.equipmentRate * b.quantity;
+    }
+
+    const costBreakdown = [
+      { label: 'Material', value: materialCost },
+      { label: 'Labor', value: laborCost },
+      { label: 'Equipment', value: equipmentCost }
+    ];
+
     return {
       totalProjects,
       activeProjects,
+      totalEstimations,
+      reportsGenerated,
+      teamMembers,
+      totalProjectValue,
+      costBreakdown
     };
 
   } catch (error) {

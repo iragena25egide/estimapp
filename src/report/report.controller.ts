@@ -1,7 +1,10 @@
-import { Controller, Post, Param, Get, Req } from '@nestjs/common';
+import { Controller, Post, Param, Get, Req, Res, UseGuards } from '@nestjs/common';
 import { ReportService } from './report.service';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { Response } from 'express';
 
 @Controller('estimaApp/reports')
+@UseGuards(JwtAuthGuard)
 export class ReportController {
   constructor(private readonly reportService: ReportService) {}
 
@@ -18,5 +21,20 @@ export class ReportController {
   @Get('project/:projectId')
   getByProject(@Param('projectId') projectId: string) {
     return this.reportService.getReportsByProject(projectId);
+  }
+
+  @Get('download/:id')
+  async download(@Param('id') id: string, @Res() res: any) {
+    try {
+      const absolutePath = await this.reportService.getReportFile(id);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=report-${id}.pdf`);
+      res.sendFile(absolutePath);
+    } catch (err) {
+      res.status(err.status || 500).json({
+        success: false,
+        message: err.message || 'Failed to download report file',
+      });
+    }
   }
 }
