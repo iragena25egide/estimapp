@@ -18,6 +18,7 @@ import { NotificationsModule } from './auth/notification.module';
 import { ReportModule } from './report/report.module';
 import { TeamModule } from './team/team.module';
 import { TeamMemberModule } from './team-member/team-member.module';
+import { RateLibraryModule } from './rate-library/rate-library.module';
 
 
 
@@ -39,7 +40,8 @@ import { TeamMemberModule } from './team-member/team-member.module';
     NotificationsModule,
     ReportModule,
     TeamModule,
-    TeamMemberModule
+    TeamMemberModule,
+    RateLibraryModule
   ],
   controllers: [AppController],
   providers: [AppService],
