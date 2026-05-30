@@ -1,8 +1,9 @@
 import { Module } from '@nestjs/common';
-import { APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ActivityInterceptor } from './auth/activity.interceptor';
+import { PrismaClientExceptionFilter } from './prisma/prisma-client-exception.filter';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { EmailsModule } from './emails/emails.module';
@@ -51,6 +52,10 @@ import { RateLibraryModule } from './rate-library/rate-library.module';
     {
       provide: APP_INTERCEPTOR,
       useClass: ActivityInterceptor,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: PrismaClientExceptionFilter,
     },
   ],
 })
