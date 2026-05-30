@@ -9,6 +9,7 @@ import {
   UploadedFile,
   UseInterceptors,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { DrawingService } from './drawing.service';
@@ -24,13 +25,11 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 export class DrawingController {
   constructor(private readonly drawingService: DrawingService) {}
 
- 
-
- 
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
   async upload(
     @UploadedFile() file: Express.Multer.File,
+    @Req() req: any,
     @Body()
     body: {
       projectId: string;
@@ -54,25 +53,23 @@ export class DrawingController {
       scale: body.scale,
       status: body.status, 
       fileType: body.fileType,
-    });
+    }, req.user.id);
   }
 
-  
   @Get('project/:projectId')
-  async findByProject(@Param('projectId') projectId: string) {
-    return this.drawingService.findByProject(projectId);
+  async findByProject(@Param('projectId') projectId: string, @Req() req: any) {
+    return this.drawingService.findByProject(projectId, req.user.id);
   }
 
-  
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return this.drawingService.findOne(id);
+  async findOne(@Param('id') id: string, @Req() req: any) {
+    return this.drawingService.findOne(id, req.user.id);
   }
 
-  
   @Patch(':id')
   async update(
     @Param('id') id: string,
+    @Req() req: any,
     @Body()
     body: {
       drawingNo?: string;
@@ -92,12 +89,11 @@ export class DrawingController {
       issueDate: body.issueDate,
       scale: body.scale,
       status: body.status,
-    });
+    }, req.user.id);
   }
 
-  
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    return this.drawingService.remove(id);
+  async remove(@Param('id') id: string, @Req() req: any) {
+    return this.drawingService.remove(id, req.user.id);
   } 
 }
