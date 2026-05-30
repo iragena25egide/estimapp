@@ -113,6 +113,7 @@ model DimensionSheet {
   length      Float?
   width       Float?
   height      Float?
+  formula     String?
 
   drawing DrawingRegister @relation(fields: [drawingId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
@@ -293,3 +294,14 @@ enum DrawingFileType {
   PLN
   IFC
 }
+
+model RateItem {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  description String
+  unit        String
+  rate        Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
