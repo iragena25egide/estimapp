@@ -11,6 +11,46 @@ import { CreateProjectDto } from './validation-project';
 export class ProjectService {
   constructor(private prisma: PrismaService) {}
 
+  async verifyAccess(projectId: string, userId: string, requireWrite = false): Promise<void> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.role === 'ADMIN') {
+      return;
+    }
+
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+    });
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    if (project.createdById === userId) {
+      return;
+    }
+
+    // Check if user U is added as a TeamMember to any Team owned by the Project creator
+    const membership = await this.prisma.teamMember.findFirst({
+      where: {
+        userId,
+        team: { ownerId: project.createdById }
+      }
+    });
+
+    if (!membership) {
+      throw new NotFoundException('Project not found or access denied');
+    }
+
+    if (requireWrite && membership.role === 'VIEWER') {
+      throw new ForbiddenException('Read-only access: modifying this project is forbidden');
+    }
+  }
+
   
   async create(dto: CreateProjectDto, userId: string) {
     try {
@@ -42,8 +82,44 @@ export class ProjectService {
 
   async findMyProjects(userId: string) {
     try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId }
+      });
+      if (!user) throw new NotFoundException('User not found');
+
+      if (user.role === 'ADMIN') {
+        return this.prisma.project.findMany({
+          orderBy: { createdAt: 'desc' },
+          include: {
+            drawings: true,
+            specifications: true,
+            boqItems: true,
+            rateAnalyses: true,
+            mtoItems: true,
+            laborCosts: true,
+            equipmentCosts: true,
+          },
+        });
+      }
+
+      // Return projects created by U OR shared in U's team membership list
       return await this.prisma.project.findMany({
-        where: { createdById: userId },
+        where: {
+          OR: [
+            { createdById: userId },
+            {
+              createdBy: {
+                ownedTeams: {
+                  some: {
+                    members: {
+                      some: { userId }
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
         orderBy: { createdAt: 'desc' },
         include: {
           drawings: true,
@@ -64,11 +140,10 @@ export class ProjectService {
 
   
   async findOne(id: string, userId: string) {
-    const project = await this.prisma.project.findFirst({
-      where: {
-        id,
-        createdById: userId,
-      },
+    await this.verifyAccess(id, userId, false);
+
+    const project = await this.prisma.project.findUnique({
+      where: { id },
       include: {
         drawings: true,
         specifications: true,
@@ -81,7 +156,7 @@ export class ProjectService {
     });
 
     if (!project) {
-      throw new NotFoundException('Project not found or access denied');
+      throw new NotFoundException('Project not found');
     }
 
     return project;
@@ -94,7 +169,7 @@ export class ProjectService {
     userId: string,
   ) {
     try {
-      await this.findOne(id, userId);
+      await this.verifyAccess(id, userId, true);
 
       return await this.prisma.project.update({
         where: { id },
@@ -122,16 +197,16 @@ export class ProjectService {
     }
   }
 
- 
+  
   async remove(id: string, userId: string) {
     try {
-      await this.findOne(id, userId);
+      await this.verifyAccess(id, userId, true);
 
       return await this.prisma.project.delete({
         where: { id },
       });
     } catch (error) {
-      if (error instanceof NotFoundException) throw error;
+      if (error instanceof NotFoundException || error instanceof ForbiddenException) throw error;
 
       throw new InternalServerErrorException(
         'Failed to delete project: ' + error.message,
