@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { ReportStatus } from '@prisma/client';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as ExcelJS from 'exceljs';
 const PDFDocument = require('pdfkit');
 
 @Injectable()
@@ -269,5 +270,153 @@ export class ReportService {
     }
 
     return absolutePath;
+  }
+
+  async generateExcelReport(projectId: string, userId: string): Promise<Buffer> {
+    await this.checkProjectAccess(projectId, userId, false);
+
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      include: { boqItems: true },
+    });
+
+    if (!project) throw new NotFoundException('Project not found');
+
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'EstimaPro';
+    workbook.lastModifiedBy = 'EstimaPro';
+    workbook.created = new Date();
+    
+    const worksheet = workbook.addWorksheet('BOQ Estimate');
+
+    // Set column widths
+    worksheet.columns = [
+      { header: 'Item No', key: 'itemNo', width: 12 },
+      { header: 'Description', key: 'description', width: 35 },
+      { header: 'Unit', key: 'unit', width: 10 },
+      { header: 'Quantity', key: 'quantity', width: 15 },
+      { header: 'Unit Rate ($)', key: 'rate', width: 18 },
+      { header: 'Amount ($)', key: 'amount', width: 20 },
+    ];
+
+    // 1. Corporate Branding Header
+    worksheet.mergeCells('A1:F2');
+    const titleCell = worksheet.getCell('A1');
+    titleCell.value = `ESTIMAPRO DETAILED QUANTITY ESTIMATE`;
+    titleCell.font = { name: 'Arial', size: 16, bold: true, color: { argb: 'FFFFFF' } };
+    titleCell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: '1E40AF' }, // Premium Dark Blue
+    };
+    titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
+
+    // 2. Metadata Rows
+    worksheet.getCell('A3').value = `Project: ${project.name}`;
+    worksheet.getCell('A3').font = { bold: true };
+    worksheet.getCell('D3').value = `Client: ${project.client || 'N/A'}`;
+    worksheet.getCell('D3').font = { bold: true };
+
+    worksheet.getCell('A4').value = `Estimator: ${project.estimatorName || 'N/A'}`;
+    worksheet.getCell('A4').font = { bold: true };
+    worksheet.getCell('D4').value = `Date: ${new Date().toLocaleDateString()}`;
+    worksheet.getCell('D4').font = { bold: true };
+
+    // Style metadata rows
+    for (let r = 3; r <= 4; r++) {
+      const row = worksheet.getRow(r);
+      row.font = { name: 'Arial', size: 10, color: { argb: '374151' } };
+    }
+
+    // 3. Table Header Row (Row 6)
+    const headerRow = worksheet.getRow(6);
+    headerRow.values = ['Item No', 'Description', 'Unit', 'Quantity', 'Unit Rate ($)', 'Amount ($)'];
+    headerRow.font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FFFFFF' } };
+    headerRow.eachCell((cell) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: '2563EB' }, // Blue
+      };
+      cell.alignment = { vertical: 'middle', horizontal: 'center' };
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'E5E7EB' } },
+        bottom: { style: 'medium', color: { argb: '1F2937' } },
+      };
+    });
+    headerRow.height = 26;
+
+    // 4. Data Rows (Row 7+)
+    const startRow = 7;
+    project.boqItems.forEach((item, index) => {
+      const rowNum = startRow + index;
+      const row = worksheet.getRow(rowNum);
+      
+      // Set cell values
+      row.getCell(1).value = item.itemNo || `${index + 1}`;
+      row.getCell(2).value = item.description;
+      row.getCell(3).value = item.unit;
+      row.getCell(4).value = item.quantity || 0;
+      row.getCell(5).value = item.totalRate || 0;
+      
+      // ACTIVE EXCEL MATH FORMULA (Quantity * Rate)
+      row.getCell(6).value = { formula: `D${rowNum}*E${rowNum}` };
+
+      // Format columns as currency or numbers
+      row.getCell(4).numFmt = '#,##0.00';
+      row.getCell(5).numFmt = '$#,##0.00';
+      row.getCell(6).numFmt = '$#,##0.00';
+
+      // Formatting & Alignments
+      row.getCell(1).alignment = { horizontal: 'center' };
+      row.getCell(3).alignment = { horizontal: 'center' };
+      row.getCell(4).alignment = { horizontal: 'right' };
+      row.getCell(5).alignment = { horizontal: 'right' };
+      row.getCell(6).alignment = { horizontal: 'right' };
+
+      // Alternating background colors
+      const bgColor = index % 2 === 0 ? 'F9FAFB' : 'FFFFFF';
+      row.eachCell((cell) => {
+        cell.font = { name: 'Arial', size: 10, color: { argb: '374151' } };
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: bgColor },
+        };
+        cell.border = {
+          bottom: { style: 'thin', color: { argb: 'F3F4F6' } },
+          left: { style: 'thin', color: { argb: 'F3F4F6' } },
+          right: { style: 'thin', color: { argb: 'F3F4F6' } },
+        };
+      });
+      row.height = 22;
+    });
+
+    const lastDataRow = startRow + project.boqItems.length - 1;
+    const totalRow = lastDataRow + 2; // Leave a blank row after data
+
+    // 5. Grand Total Row
+    worksheet.mergeCells(`A${totalRow}:E${totalRow}`);
+    const totalLabelCell = worksheet.getCell(`A${totalRow}`);
+    totalLabelCell.value = 'Grand Total Estimated Cost:';
+    totalLabelCell.font = { name: 'Arial', size: 11, bold: true, color: { argb: '1F2937' } };
+    totalLabelCell.alignment = { horizontal: 'right', vertical: 'middle' };
+
+    const totalValueCell = worksheet.getCell(`F${totalRow}`);
+    
+    // ACTIVE EXCEL SUM FORMULA
+    totalValueCell.value = { formula: `SUM(F7:F${lastDataRow})` };
+    totalValueCell.font = { name: 'Arial', size: 12, bold: true, color: { argb: '1E40AF' } };
+    totalValueCell.numFmt = '$#,##0.00';
+    totalValueCell.alignment = { horizontal: 'right', vertical: 'middle' };
+    
+    // Professional Double Border Underline style for totals
+    totalValueCell.border = {
+      top: { style: 'thin', color: { argb: 'D1D5DB' } },
+      bottom: { style: 'double', color: { argb: '1E40AF' } },
+    };
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    return Buffer.from(buffer as any);
   }
 }
