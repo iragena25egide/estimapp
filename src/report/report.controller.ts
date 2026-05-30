@@ -14,19 +14,19 @@ export class ReportController {
   }
 
   @Post(':reportId/send')
-  send(@Param('reportId') reportId: string) {
-    return this.reportService.sendReport(reportId);
+  send(@Param('reportId') reportId: string, @Req() req: any) {
+    return this.reportService.sendReport(reportId, req.user.id);
   }
 
   @Get('project/:projectId')
-  getByProject(@Param('projectId') projectId: string) {
-    return this.reportService.getReportsByProject(projectId);
+  getByProject(@Param('projectId') projectId: string, @Req() req: any) {
+    return this.reportService.getReportsByProject(projectId, req.user.id);
   }
 
   @Get('download/:id')
-  async download(@Param('id') id: string, @Res() res: any) {
+  async download(@Param('id') id: string, @Req() req: any, @Res() res: any) {
     try {
-      const absolutePath = await this.reportService.getReportFile(id);
+      const absolutePath = await this.reportService.getReportFile(id, req.user.id);
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename=report-${id}.pdf`);
       res.sendFile(absolutePath);
