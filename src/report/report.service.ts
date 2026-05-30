@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, NotFoundException, InternalServerErrorException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ReportStatus } from '@prisma/client';
 import * as fs from 'fs';
@@ -8,6 +8,45 @@ const PDFDocument = require('pdfkit');
 @Injectable()
 export class ReportService {
   constructor(private prisma: PrismaService) {}
+
+  private async checkProjectAccess(projectId: string, userId: string, requireWrite = false): Promise<void> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.role === 'ADMIN') {
+      return;
+    }
+
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+    });
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    if (project.createdById === userId) {
+      return;
+    }
+
+    const membership = await this.prisma.teamMember.findFirst({
+      where: {
+        userId,
+        team: { ownerId: project.createdById }
+      }
+    });
+
+    if (!membership) {
+      throw new NotFoundException('Project not found or access denied');
+    }
+
+    if (requireWrite && membership.role === 'VIEWER') {
+      throw new ForbiddenException('Access denied: Viewer role has read-only access');
+    }
+  }
 
   private generatePdf(filePath: string, project: any, version: number): Promise<void> {
     return new Promise((resolve, reject) => {
@@ -130,6 +169,8 @@ export class ReportService {
   }
 
   async generateReport(projectId: string, userId: string) {
+    await this.checkProjectAccess(projectId, userId, true);
+
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
       include: {
@@ -182,7 +223,7 @@ export class ReportService {
     });
   }
 
-  async sendReport(reportId: string) {
+  async sendReport(reportId: string, userId: string) {
     const report = await this.prisma.report.findUnique({
       where: { id: reportId },
     });
@@ -190,6 +231,8 @@ export class ReportService {
     if (!report) {
       throw new NotFoundException('Report not found');
     }
+
+    await this.checkProjectAccess(report.projectId, userId, true);
 
     return this.prisma.report.update({
       where: { id: reportId },
@@ -199,14 +242,15 @@ export class ReportService {
     });
   }
 
-  async getReportsByProject(projectId: string) {
+  async getReportsByProject(projectId: string, userId: string) {
+    await this.checkProjectAccess(projectId, userId, false);
     return this.prisma.report.findMany({
       where: { projectId },
       orderBy: { createdAt: 'desc' },
     });
   }
 
-  async getReportFile(reportId: string) {
+  async getReportFile(reportId: string, userId: string) {
     const report = await this.prisma.report.findUnique({
       where: { id: reportId },
     });
@@ -214,6 +258,8 @@ export class ReportService {
     if (!report) {
       throw new NotFoundException('Report not found');
     }
+
+    await this.checkProjectAccess(report.projectId, userId, false);
 
     const uploadDir = path.join(__dirname, '..', '..');
     const absolutePath = path.join(uploadDir, report.filePath);
@@ -225,4 +271,3 @@ export class ReportService {
     return absolutePath;
   }
 }
-
