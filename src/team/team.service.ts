@@ -36,7 +36,7 @@ export class TeamService {
 
   async inviteMember(teamId: string, email: string, role: TeamRole) {
     const token = randomUUID();
-    const frontendUrl = this.configService.get<string>('FRONTEND_URL');
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:5173';
     const inviteLink = `${frontendUrl}/invite?token=${token}`;
 
     // Create the invitation in the database
@@ -120,7 +120,7 @@ export class TeamService {
       data: { accepted: true },
     });
 
-    return { message: 'Joined team successfully' };
+    return { message: 'Joined team successfully', teamId: invitation.teamId };
   }
 
 
