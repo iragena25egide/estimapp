@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { ActivityInterceptor } from './auth/activity.interceptor';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { EmailsModule } from './emails/emails.module';
@@ -44,6 +46,12 @@ import { RateLibraryModule } from './rate-library/rate-library.module';
     RateLibraryModule
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ActivityInterceptor,
+    },
+  ],
 })
 export class AppModule {}
