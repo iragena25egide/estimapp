@@ -20,6 +20,7 @@ model User {
   projects         Project[]
   generatedReports Report[]
   ownedTeams       Team[]
+  estimationTemplates EstimationTemplate[]
   teamMemberships  TeamMember[]
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
@@ -303,5 +304,35 @@ model RateItem {
   rate        Float
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model EstimationTemplate {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  tasks       TemplateTask[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model TemplateTask {
+  id         String   @id @default(uuid())
+  templateId String
+  title      String
+  defaultRate Float?
+  order      Int
+  template   EstimationTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model NotificationLog {
+  id        String   @id @default(uuid())
+  type      NotificationType
+  payload   Json
+  status    String   @default("sent")
+  sentAt    DateTime @default(now())
 }
 
