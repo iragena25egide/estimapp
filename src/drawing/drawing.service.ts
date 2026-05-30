@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   DrawingFileType,
@@ -19,7 +19,45 @@ import { IFCDimensions } from './types';
 export class DrawingService {
   constructor(private prisma: PrismaService) {}
 
- 
+  private async checkProjectAccess(projectId: string, userId: string, requireWrite = false): Promise<void> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.role === 'ADMIN') {
+      return;
+    }
+
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+    });
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    if (project.createdById === userId) {
+      return;
+    }
+
+    const membership = await this.prisma.teamMember.findFirst({
+      where: {
+        userId,
+        team: { ownerId: project.createdById }
+      }
+    });
+
+    if (!membership) {
+      throw new NotFoundException('Project not found or access denied');
+    }
+
+    if (requireWrite && membership.role === 'VIEWER') {
+      throw new ForbiddenException('Access denied: Viewer role has read-only access');
+    }
+  }
+
   async createWithFile(
     file: Express.Multer.File,
     data: {
@@ -33,22 +71,17 @@ export class DrawingService {
       status: DrawingStatus; 
       fileType: DrawingFileType;
     },
+    userId: string,
   ) {
     try {
-      
-      const project = await this.prisma.project.findUnique({
-        where: { id: data.projectId },
-      });
-      if (!project) throw new NotFoundException('Project not found');
+      await this.checkProjectAccess(data.projectId, userId, true);
 
-      
       const uploadDir = path.join(__dirname, '..', '..', 'uploads');
       if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 
       const filePath = path.join(uploadDir, `${Date.now()}-${file.originalname}`);
       fs.writeFileSync(filePath, file.buffer);
 
-      
       let dimensions: IFCDimensions = { length: null, width: null, height: null };
       if (data.fileType === DrawingFileType.IFC) {
         try {
@@ -58,7 +91,6 @@ export class DrawingService {
         }
       }
 
-     
       const drawing = await this.prisma.drawingRegister.create({
         data: {
           projectId: data.projectId,
@@ -75,7 +107,6 @@ export class DrawingService {
         },
       });
 
-      
       if (data.fileType === DrawingFileType.IFC) {
         const sheets: DimensionSheetData[] = generateDimensionSheets(dimensions);
         if (sheets.length > 0) {
@@ -102,43 +133,43 @@ export class DrawingService {
 
       return drawing;
     } catch (err) {
-      // Catch-all
-      if (err instanceof NotFoundException || err instanceof BadRequestException || err instanceof InternalServerErrorException) {
+      if (err instanceof NotFoundException || err instanceof BadRequestException || err instanceof InternalServerErrorException || err instanceof ForbiddenException) {
         throw err;
       }
       throw new InternalServerErrorException('Failed to create drawing: ' + err.message);
     }
   }
 
-  
-  async findByProject(projectId: string) {
+  async findByProject(projectId: string, userId: string) {
     try {
+      await this.checkProjectAccess(projectId, userId, false);
       return await this.prisma.drawingRegister.findMany({
         where: { projectId },
         include: { dimensionSheets: true },
         orderBy: { issueDate: 'desc' },
       });
     } catch (err) {
+      if (err instanceof NotFoundException || err instanceof ForbiddenException) throw err;
       throw new InternalServerErrorException('Failed to fetch drawings: ' + err.message);
     }
   }
 
-  
-  async findOne(id: string) {
+  async findOne(id: string, userId: string) {
     try {
       const drawing = await this.prisma.drawingRegister.findUnique({
         where: { id },
         include: { dimensionSheets: true },
       });
       if (!drawing) throw new NotFoundException('Drawing not found');
+      
+      await this.checkProjectAccess(drawing.projectId, userId, false);
       return drawing;
     } catch (err) {
-      if (err instanceof NotFoundException) throw err;
+      if (err instanceof NotFoundException || err instanceof ForbiddenException) throw err;
       throw new InternalServerErrorException('Failed to fetch drawing: ' + err.message);
     }
   }
 
- 
   async update(
     id: string,
     data: Partial<{
@@ -149,10 +180,13 @@ export class DrawingService {
       issueDate: string | Date;
       scale: string;
       status: DrawingStatus; 
-    }>
+    }>,
+    userId: string,
   ) {
     try {
-      await this.findOne(id);
+      const drawing = await this.findOne(id, userId);
+      await this.checkProjectAccess(drawing.projectId, userId, true);
+
       return await this.prisma.drawingRegister.update({
         where: { id },
         data: {
@@ -161,18 +195,19 @@ export class DrawingService {
         },
       });
     } catch (err) {
-      if (err instanceof NotFoundException) throw err;
+      if (err instanceof NotFoundException || err instanceof ForbiddenException) throw err;
       throw new InternalServerErrorException('Failed to update drawing: ' + err.message);
     }
   }
 
-  
-  async remove(id: string) {
+  async remove(id: string, userId: string) {
     try {
-      await this.findOne(id);
+      const drawing = await this.findOne(id, userId);
+      await this.checkProjectAccess(drawing.projectId, userId, true);
+
       return await this.prisma.drawingRegister.delete({ where: { id } });
     } catch (err) {
-      if (err instanceof NotFoundException) throw err;
+      if (err instanceof NotFoundException || err instanceof ForbiddenException) throw err;
       throw new InternalServerErrorException('Failed to delete drawing: ' + err.message);
     }
   }
