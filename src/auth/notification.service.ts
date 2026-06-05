@@ -46,9 +46,41 @@ export class NotificationsService {
       details: details || {},
     };
 
+    // Save to DB so it can be fetched later
+    const notif = await this.prisma.notification.create({
+      data: {
+        type: 'QS_REGISTERED', // reusing this type or could add a new one in schema, actually let's stick to existing
+        recipientRole: 'ADMIN',
+        payload,
+      },
+    });
+
     if (this.gateway.server) {
       // Emit live to online admins
-      this.gateway.emitToRole('ADMIN', 'admin_activity_notification', payload);
+      this.gateway.emitToRole('ADMIN', 'admin_activity_notification', { id: notif.id, ...payload, isRead: false, createdAt: notif.createdAt });
     }
+  }
+
+  async getUserNotifications(role: string) {
+    // Only get notifications meant for this role
+    return this.prisma.notification.findMany({
+      where: { recipientRole: role as any },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
+  }
+
+  async markAsRead(id: string) {
+    return this.prisma.notification.update({
+      where: { id },
+      data: { isRead: true },
+    });
+  }
+
+  async markAllAsRead(role: string) {
+    return this.prisma.notification.updateMany({
+      where: { recipientRole: role as any, isRead: false },
+      data: { isRead: true },
+    });
   }
 }
