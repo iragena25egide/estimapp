@@ -19,18 +19,20 @@ export class AuthService {
     private notificationService: NotificationsService,
   ) {}
 
-  
   async login(dto: LoginDto) {
     const user = await this.usersService.findByEmailOrFail(dto.email);
 
     if (!user.localAuth) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException(
+        'This account uses Google sign-in. Please use "Continue with Google".',
+      );
     }
 
     const isValid = await bcrypt.compare(dto.password, user.localAuth.password);
     if (!isValid) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Incorrect password. Please try again.');
     }
+
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     this.otpStore.set(user.email, otp);
@@ -180,7 +182,8 @@ async getMe(token: string) {
 
     return {
       id: user.id,
-      name: `${user.firstName} ${user.lastName}`,
+      firstName: user.firstName,
+      lastName: user.lastName,
       email: user.email,
       role: user.role,
       avatar: user.googleAuth?.avatarUrl || null,
