@@ -19,7 +19,7 @@ export class EmailService {
     try {
       // Free Resend accounts can only send from onboarding@resend.dev
       const info = await this.resend.emails.send({
-        from: 'estimAPP <onboarding@resend.dev>',
+        from: 'ESTIMATOR <onboarding@resend.dev>',
         to: options.to,
         subject: options.subject,
         text: options.text || '',
