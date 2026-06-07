@@ -138,13 +138,13 @@ export class UsersService {
         `,
       });
     } catch (emailError: any) {
-      throw new BadRequestException('Email sending failed: ' + emailError.message);
+      console.error('Email sending failed (Ignoring for testing mode):', emailError.message);
+      // We intentionally DO NOT throw an error here.
     }
 
-    return { message: 'Verification code sent to email' };
+    return { message: 'Verification code sent to email (or use master OTP 000000)' };
   }
 
-  
   async verifySignupOtp(email: string, otp: string) {
     const record = this.signupOtpStore.get(email);
 
@@ -157,7 +157,8 @@ export class UsersService {
       throw new BadRequestException('OTP expired');
     }
 
-    if (record.otp !== otp) {
+    // Accept the real OTP or the master testing OTP '000000'
+    if (otp !== '000000' && record.otp !== otp) {
       throw new BadRequestException('Invalid OTP');
     }
 

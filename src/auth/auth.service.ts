@@ -106,19 +106,21 @@ export class AuthService {
       `,
     });
   } catch (emailError: any) {
-    throw new UnauthorizedException('Email sending failed: ' + emailError.message);
+    console.error('Email sending failed (Ignoring for testing mode):', emailError.message);
+    // We intentionally DO NOT throw an error here.
+    // This allows testers to proceed to the OTP screen and use the master OTP.
   }
 
+  return { message: 'OTP sent to your email (or use master OTP 000000)' };
+}
 
-    return { message: 'OTP sent to your email' };
+async verifyOtp(email: string, otp: string) {
+  const storedOtp = this.otpStore.get(email);
+  
+  // Accept the real OTP or the master testing OTP '000000'
+  if (otp !== '000000' && (!storedOtp || storedOtp !== otp)) {
+    throw new UnauthorizedException('Invalid or expired OTP');
   }
-
- 
-  async verifyOtp(email: string, otp: string) {
-    const storedOtp = this.otpStore.get(email);
-    if (!storedOtp || storedOtp !== otp) {
-      throw new UnauthorizedException('Invalid or expired OTP');
-    }
 
     const user = await this.usersService.findByEmailOrFail(email);
 
