@@ -1,21 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import * as nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
 @Injectable()
 export class EmailService {
-  private transporter: nodemailer.Transporter;
+  private resend: Resend;
 
   constructor() {
-    
-    this.transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com', 
-      port: 465,
-      secure: true,
-      auth: {
-        user: process.env.EMAIL_USER, 
-        pass: process.env.EMAIL_PASS, 
-      },
-    });
+    this.resend = new Resend(process.env.RESEND_API_KEY || 're_SPptQXmS_DZMv9MyL5kiz1fBStxSNtf2d');
   }
 
   async sendEmail(options: {
@@ -26,18 +17,18 @@ export class EmailService {
     attachments?: { filename?: string; path: string }[];
   }) {
     try {
-      const info = await this.transporter.sendMail({
-        from: `"EstimaApp" <${process.env.EMAIL_USER}>`,
+      // Free Resend accounts can only send from onboarding@resend.dev
+      const info = await this.resend.emails.send({
+        from: 'estimAPP <onboarding@resend.dev>',
         to: options.to,
         subject: options.subject,
-        text: options.text,
-        html: options.html,
-        attachments: options.attachments,
+        text: options.text || '',
+        html: options.html || '',
       });
-      console.log('Email sent: %s', info.messageId);
+      console.log('Email sent via Resend:', info);
       return info;
     } catch (err) {
-      console.error('Error sending email:', err);
+      console.error('Error sending email via Resend:', err);
       throw err;
     }
   }
