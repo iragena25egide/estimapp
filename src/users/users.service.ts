@@ -41,9 +41,14 @@ export class UsersService {
     phone?: string;
     role?: Role;
   }) {
-    const existing = await this.prisma.user.findUnique({
-      where: { email: dto.email },
-    });
+    let existing;
+    try {
+      existing = await this.prisma.user.findUnique({
+        where: { email: dto.email },
+      });
+    } catch (dbError: any) {
+      throw new BadRequestException('Database error: ' + dbError.message);
+    }
 
     if (existing) {
       throw new BadRequestException('Email already exists');
@@ -64,10 +69,11 @@ export class UsersService {
       },
     });
 
-   await this.emailService.sendEmail({
-  to: dto.email,
-  subject: 'estimAPP || Verify Your Email',
-  html: `
+    try {
+      await this.emailService.sendEmail({
+        to: dto.email,
+        subject: 'estimAPP || Verify Your Email',
+        html: `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -129,8 +135,11 @@ export class UsersService {
   </div>
 </body>
 </html>
-  `,
-});
+        `,
+      });
+    } catch (emailError: any) {
+      throw new BadRequestException('Email sending failed: ' + emailError.message);
+    }
 
     return { message: 'Verification code sent to email' };
   }
