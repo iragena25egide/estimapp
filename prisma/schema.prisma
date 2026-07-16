@@ -282,18 +282,21 @@ enum Discipline {
   ARCH
   STRUCT
   MEP
+  CIVIL
 }
 
 enum DrawingStatus {
   ISSUED
   REVISED
   SUPERSEDED
+  WIP
 }
 
 enum DrawingFileType {
   IMAGE
   PLN
   IFC
+  PDF
 }
 
 model RateItem {
