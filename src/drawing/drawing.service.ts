@@ -82,12 +82,21 @@ export class DrawingService {
       const filePath = path.join(uploadDir, `${Date.now()}-${file.originalname}`);
       fs.writeFileSync(filePath, file.buffer);
 
+      // Auto-detect fileType from extension if frontend sends unknown type
+      const ext = path.extname(file.originalname).toLowerCase();
+      let resolvedFileType: DrawingFileType = data.fileType;
+      if (ext === '.ifc') resolvedFileType = DrawingFileType.IFC;
+      else if (ext === '.pln') resolvedFileType = DrawingFileType.PLN;
+      else if (['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp'].includes(ext)) resolvedFileType = DrawingFileType.IMAGE;
+
       let dimensions: IFCExtractedData | null = null;
-      if (data.fileType === DrawingFileType.IFC) {
+      // Only .ifc files can be parsed by web-ifc (not .pln native ArchiCAD format)
+      if (resolvedFileType === DrawingFileType.IFC) {
         try {
           dimensions = await extractIFCDimensions(filePath);
         } catch (err) {
-          throw new BadRequestException('Failed to extract IFC dimensions: ' + err.message);
+          // Non-fatal — log and continue; dimension sheets won't be auto-generated
+          console.warn('[drawing] IFC extraction failed, saving file without dimensions:', err.message);
         }
       }
 
@@ -102,7 +111,7 @@ export class DrawingService {
           scale: data.scale,
           status: data.status,
           fileUrl: filePath,
-          fileType: data.fileType,
+          fileType: resolvedFileType,
           ...( dimensions ? {
             length: dimensions.length,
             width: dimensions.width,
@@ -111,7 +120,7 @@ export class DrawingService {
         },
       });
 
-      if (data.fileType === DrawingFileType.IFC && dimensions) {
+      if (resolvedFileType === DrawingFileType.IFC && dimensions) {
         const sheets: DimensionSheetData[] = generateDimensionSheets(dimensions);
         if (sheets.length > 0) {
           try {
