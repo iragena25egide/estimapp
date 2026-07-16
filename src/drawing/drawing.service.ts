@@ -13,7 +13,7 @@ import {
 import { DimensionSheetData,
   generateDimensionSheets,
 } from './quantity-rules';
-import { IFCDimensions } from './types';
+import { IFCExtractedData } from './types';
 
 @Injectable()
 export class DrawingService {
@@ -82,7 +82,7 @@ export class DrawingService {
       const filePath = path.join(uploadDir, `${Date.now()}-${file.originalname}`);
       fs.writeFileSync(filePath, file.buffer);
 
-      let dimensions: IFCDimensions = { length: null, width: null, height: null };
+      let dimensions: IFCExtractedData | null = null;
       if (data.fileType === DrawingFileType.IFC) {
         try {
           dimensions = await extractIFCDimensions(filePath);
@@ -103,11 +103,15 @@ export class DrawingService {
           status: data.status,
           fileUrl: filePath,
           fileType: data.fileType,
-          ...dimensions,
+          ...( dimensions ? {
+            length: dimensions.length,
+            width: dimensions.width,
+            height: dimensions.height,
+          } : {}),
         },
       });
 
-      if (data.fileType === DrawingFileType.IFC) {
+      if (data.fileType === DrawingFileType.IFC && dimensions) {
         const sheets: DimensionSheetData[] = generateDimensionSheets(dimensions);
         if (sheets.length > 0) {
           try {
