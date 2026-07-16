@@ -2,15 +2,22 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
-  const user = await prisma.user.findFirst({
+  let user = await prisma.user.findFirst({
     orderBy: { createdAt: 'desc' }
   });
 
   if (!user) {
-    console.log("No user found. Please sign up first.");
-    return;
+    console.log("No user found. Creating a default estimator user...");
+    user = await prisma.user.create({
+      data: {
+        firstName: "Demo",
+        lastName: "Estimator",
+        email: "demo@estimapro.com",
+        role: "ESTIMATOR",
+        isActive: true,
+      }
+    });
   }
-  
   const project = await prisma.project.create({
     data: {
       name: "Kigali Heights Expansion - Full Example",
