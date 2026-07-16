@@ -2,176 +2,565 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
+  // ── Find or use the most recent user ──────────────────────────────────────
   let user = await prisma.user.findFirst({
-    orderBy: { createdAt: 'desc' }
+    orderBy: { createdAt: 'desc' },
   });
 
   if (!user) {
-    console.log("No user found. Creating a default estimator user...");
+    console.log('No user found. Creating a default estimator user...');
     user = await prisma.user.create({
       data: {
-        firstName: "Demo",
-        lastName: "Estimator",
-        email: "demo@estimapro.com",
-        role: "ESTIMATOR",
+        firstName: 'Demo',
+        lastName: 'Estimator',
+        email: 'demo@estimapro.com',
+        role: 'ESTIMATOR',
         isActive: true,
-      }
+      },
     });
   }
+
+  console.log(`Seeding project for user: ${user.firstName} ${user.lastName} (${user.email})`);
+
+  // ── Create the new project with all related data ──────────────────────────
   const project = await prisma.project.create({
     data: {
-      name: "Kigali Heights Expansion - Full Example",
-      client: "Rwanda Infrastructure Board",
-      location: "Kigali, Rwanda",
-      projectType: "Commercial",
-      contractType: "LUMP_SUM",
-      startDate: new Date("2026-07-01"),
-      completionDate: new Date("2027-07-01"),
-      estimatorName: user.firstName + " " + user.lastName,
+      name: 'RP KIGALI NEW BLOCK',
+      client: 'RP KIGALI',
+      location: 'Kigali, Kicukiro',
+      projectType: 'Residential',
+      contractType: 'BOQ',
+      startDate: new Date('2026-08-01'),
+      completionDate: new Date('2027-06-30'),
+      estimatorName: user.firstName + ' ' + user.lastName,
       createdById: user.id,
-      
+
+      // ─── BOQ Items ──────────────────────────────────────────────────────
       boqItems: {
         create: [
           {
-            itemNo: "1.1",
-            description: "Excavation for foundation",
-            unit: "m3",
-            quantity: 500,
+            itemNo: '1.1',
+            description: 'Site clearance and grubbing',
+            unit: 'm2',
+            quantity: 650,
             materialRate: 0,
-            laborRate: 1500, // RWF
-            equipmentRate: 5000, // RWF
-            totalRate: 6500,
-            amount: 500 * 6500,
-            section: "Substructure"
+            laborRate: 800,
+            equipmentRate: 1200,
+            totalRate: 2000,
+            amount: 650 * 2000,
+            section: 'Preliminary Works',
           },
           {
-            itemNo: "1.2",
-            description: "Concrete for footing class C25",
-            unit: "m3",
-            quantity: 120,
-            materialRate: 120000, // RWF
+            itemNo: '1.2',
+            description: 'Excavation to reduce levels (average 1.5m depth)',
+            unit: 'm3',
+            quantity: 975,
+            materialRate: 0,
+            laborRate: 2500,
+            equipmentRate: 4500,
+            totalRate: 7000,
+            amount: 975 * 7000,
+            section: 'Preliminary Works',
+          },
+          {
+            itemNo: '2.1',
+            description: 'Plain concrete blinding C15 (75mm thick)',
+            unit: 'm3',
+            quantity: 48,
+            materialRate: 95000,
+            laborRate: 12000,
+            equipmentRate: 3000,
+            totalRate: 110000,
+            amount: 48 * 110000,
+            section: 'Substructure',
+          },
+          {
+            itemNo: '2.2',
+            description: 'Reinforced concrete strip foundation C25',
+            unit: 'm3',
+            quantity: 186,
+            materialRate: 125000,
+            laborRate: 18000,
+            equipmentRate: 7000,
+            totalRate: 150000,
+            amount: 186 * 150000,
+            section: 'Substructure',
+          },
+          {
+            itemNo: '2.3',
+            description: 'Reinforced concrete ground floor slab (150mm) C25',
+            unit: 'm3',
+            quantity: 97,
+            materialRate: 120000,
             laborRate: 15000,
             equipmentRate: 5000,
             totalRate: 140000,
-            amount: 120 * 140000,
-            section: "Substructure"
-          }
-        ]
+            amount: 97 * 140000,
+            section: 'Substructure',
+          },
+          {
+            itemNo: '3.1',
+            description: 'Reinforced concrete columns 300x300mm C25',
+            unit: 'm3',
+            quantity: 28,
+            materialRate: 135000,
+            laborRate: 22000,
+            equipmentRate: 8000,
+            totalRate: 165000,
+            amount: 28 * 165000,
+            section: 'Superstructure',
+          },
+          {
+            itemNo: '3.2',
+            description: 'Reinforced concrete beams 200x400mm C25',
+            unit: 'm3',
+            quantity: 34,
+            materialRate: 130000,
+            laborRate: 20000,
+            equipmentRate: 7000,
+            totalRate: 157000,
+            amount: 34 * 157000,
+            section: 'Superstructure',
+          },
+          {
+            itemNo: '3.3',
+            description: 'Stone masonry walls (cement:sand 1:3) 200mm thick',
+            unit: 'm2',
+            quantity: 840,
+            materialRate: 28000,
+            laborRate: 9500,
+            equipmentRate: 500,
+            totalRate: 38000,
+            amount: 840 * 38000,
+            section: 'Superstructure',
+          },
+          {
+            itemNo: '3.4',
+            description: 'Reinforced concrete suspended slab (150mm) C25',
+            unit: 'm3',
+            quantity: 112,
+            materialRate: 122000,
+            laborRate: 16000,
+            equipmentRate: 5000,
+            totalRate: 143000,
+            amount: 112 * 143000,
+            section: 'Superstructure',
+          },
+          {
+            itemNo: '4.1',
+            description: 'Galvanized iron roof sheet (0.5mm gauge)',
+            unit: 'm2',
+            quantity: 520,
+            materialRate: 18500,
+            laborRate: 4500,
+            equipmentRate: 0,
+            totalRate: 23000,
+            amount: 520 * 23000,
+            section: 'Roofing',
+          },
+          {
+            itemNo: '4.2',
+            description: 'Ridge capping and valley gutters galvanized',
+            unit: 'lm',
+            quantity: 85,
+            materialRate: 12000,
+            laborRate: 3000,
+            equipmentRate: 0,
+            totalRate: 15000,
+            amount: 85 * 15000,
+            section: 'Roofing',
+          },
+          {
+            itemNo: '5.1',
+            description: 'Cement render (15mm) walls internal and external',
+            unit: 'm2',
+            quantity: 1680,
+            materialRate: 5500,
+            laborRate: 4500,
+            equipmentRate: 0,
+            totalRate: 10000,
+            amount: 1680 * 10000,
+            section: 'Finishes',
+          },
+          {
+            itemNo: '5.2',
+            description: 'Ceramic floor tiles 600x600mm (including bedding)',
+            unit: 'm2',
+            quantity: 645,
+            materialRate: 35000,
+            laborRate: 12000,
+            equipmentRate: 0,
+            totalRate: 47000,
+            amount: 645 * 47000,
+            section: 'Finishes',
+          },
+          {
+            itemNo: '5.3',
+            description: 'Emulsion paint walls (2 coats)',
+            unit: 'm2',
+            quantity: 1680,
+            materialRate: 3200,
+            laborRate: 1800,
+            equipmentRate: 0,
+            totalRate: 5000,
+            amount: 1680 * 5000,
+            section: 'Finishes',
+          },
+          {
+            itemNo: '6.1',
+            description: 'Single leaf solid core door 900x2100mm (supply & fix)',
+            unit: 'No',
+            quantity: 24,
+            materialRate: 185000,
+            laborRate: 15000,
+            equipmentRate: 0,
+            totalRate: 200000,
+            amount: 24 * 200000,
+            section: 'Joinery',
+          },
+          {
+            itemNo: '6.2',
+            description: 'Aluminium sliding window 1200x1200mm (supply & fix)',
+            unit: 'No',
+            quantity: 36,
+            materialRate: 220000,
+            laborRate: 18000,
+            equipmentRate: 0,
+            totalRate: 238000,
+            amount: 36 * 238000,
+            section: 'Joinery',
+          },
+        ],
       },
+
+      // ─── Material Take-Off ───────────────────────────────────────────────
       mtoItems: {
         create: [
           {
-            materialName: "Cement OPC 42.5",
-            unit: "Bags",
-            quantity: 800,
-            deliveryLocation: "Site A",
-            requiredDate: new Date("2026-07-15")
-          }
-        ]
+            materialName: 'Cement OPC 42.5N (Cimerwa)',
+            specification: '50kg bags, OPC grade',
+            unit: 'Bags',
+            quantity: 2400,
+            deliveryLocation: 'Kicukiro Site',
+            requiredDate: new Date('2026-08-15'),
+          },
+          {
+            materialName: 'Coarse Aggregate (Crushed Stone 20mm)',
+            specification: 'Washed, graded',
+            unit: 'm3',
+            quantity: 380,
+            deliveryLocation: 'Kicukiro Site',
+            requiredDate: new Date('2026-08-15'),
+          },
+          {
+            materialName: 'Fine Sand (River Sand)',
+            specification: 'Clean river sand, well graded',
+            unit: 'm3',
+            quantity: 290,
+            deliveryLocation: 'Kicukiro Site',
+            requiredDate: new Date('2026-08-15'),
+          },
+          {
+            materialName: 'Steel Reinforcement Y16 (High Yield)',
+            specification: 'Grade 500, 12m lengths',
+            unit: 'Tonnes',
+            quantity: 18,
+            deliveryLocation: 'Kicukiro Site',
+            requiredDate: new Date('2026-09-01'),
+          },
+          {
+            materialName: 'Steel Reinforcement Y10 (Stirrups)',
+            specification: 'Grade 500',
+            unit: 'Tonnes',
+            quantity: 6.5,
+            deliveryLocation: 'Kicukiro Site',
+            requiredDate: new Date('2026-09-01'),
+          },
+          {
+            materialName: 'Cut Stone (Gicumbi Volcanic Stone)',
+            specification: '200x200x400mm, properly coursed',
+            unit: 'm3',
+            quantity: 210,
+            deliveryLocation: 'Kicukiro Site',
+            requiredDate: new Date('2026-09-15'),
+          },
+          {
+            materialName: 'Galvanized Iron Roofing Sheets 0.5mm',
+            specification: 'Long-span roofing, 3m lengths',
+            unit: 'Sheets',
+            quantity: 620,
+            deliveryLocation: 'Kicukiro Site',
+            requiredDate: new Date('2027-01-15'),
+          },
+          {
+            materialName: 'Ceramic Floor Tiles 600x600mm',
+            specification: 'Glazed porcelain, anti-slip grade',
+            unit: 'm2',
+            quantity: 680,
+            deliveryLocation: 'Kicukiro Site',
+            requiredDate: new Date('2027-02-01'),
+          },
+        ],
       },
+
+      // ─── Labor Productivity ──────────────────────────────────────────────
       laborCosts: {
         create: [
           {
-            trade: "Mason",
-            activity: "Concrete pouring",
-            productivityRate: 2.5,
-            manHours: 48,
-            laborRatePerHour: 2000, // RWF
-            totalLaborCost: 48 * 2000
-          }
-        ]
+            trade: 'Mason',
+            activity: 'Stone masonry wall construction',
+            productivityRate: 3.5,
+            manHours: 960,
+            laborRatePerHour: 2500,
+            totalLaborCost: 960 * 2500,
+          },
+          {
+            trade: 'Concrete Finisher',
+            activity: 'Concrete slab and column work',
+            productivityRate: 4.0,
+            manHours: 480,
+            laborRatePerHour: 2800,
+            totalLaborCost: 480 * 2800,
+          },
+          {
+            trade: 'Reinforcement Steel Fixer',
+            activity: 'Bar bending and placement',
+            productivityRate: 1.2,
+            manHours: 320,
+            laborRatePerHour: 3200,
+            totalLaborCost: 320 * 3200,
+          },
+          {
+            trade: 'Carpenter (Formwork)',
+            activity: 'Formwork fabrication and striking',
+            productivityRate: 2.8,
+            manHours: 400,
+            laborRatePerHour: 2600,
+            totalLaborCost: 400 * 2600,
+          },
+          {
+            trade: 'Roofer',
+            activity: 'GI sheet fixing and ridge capping',
+            productivityRate: 5.0,
+            manHours: 160,
+            laborRatePerHour: 2800,
+            totalLaborCost: 160 * 2800,
+          },
+          {
+            trade: 'Tile Fixer',
+            activity: 'Ceramic floor and wall tiling',
+            productivityRate: 6.5,
+            manHours: 200,
+            laborRatePerHour: 3000,
+            totalLaborCost: 200 * 3000,
+          },
+          {
+            trade: 'Painter',
+            activity: 'Internal and external emulsion painting',
+            productivityRate: 12.0,
+            manHours: 280,
+            laborRatePerHour: 2000,
+            totalLaborCost: 280 * 2000,
+          },
+          {
+            trade: 'General Labourer',
+            activity: 'General site assistance',
+            productivityRate: 0,
+            manHours: 1200,
+            laborRatePerHour: 1500,
+            totalLaborCost: 1200 * 1500,
+          },
+        ],
       },
+
+      // ─── Equipment Costs ─────────────────────────────────────────────────
       equipmentCosts: {
         create: [
           {
-            equipmentName: "Concrete Mixer",
-            capacity: "1m3",
-            hireRatePerDay: 50000, // RWF
-            durationDays: 10,
-            fuelCost: 100000,
-            operatorCost: 50000,
-            totalCost: 10 * 50000 + 100000 + 50000
-          }
-        ]
+            equipmentName: 'Concrete Mixer (350L)',
+            capacity: '350 litres',
+            hireRatePerDay: 55000,
+            durationDays: 45,
+            fuelCost: 250000,
+            operatorCost: 180000,
+            totalCost: 45 * 55000 + 250000 + 180000,
+          },
+          {
+            equipmentName: 'Excavator CAT 320',
+            capacity: '1.2m3 bucket',
+            hireRatePerDay: 350000,
+            durationDays: 8,
+            fuelCost: 320000,
+            operatorCost: 80000,
+            totalCost: 8 * 350000 + 320000 + 80000,
+          },
+          {
+            equipmentName: 'Tipper Truck (10 Tonne)',
+            capacity: '10 tonnes',
+            hireRatePerDay: 120000,
+            durationDays: 12,
+            fuelCost: 180000,
+            operatorCost: 72000,
+            totalCost: 12 * 120000 + 180000 + 72000,
+          },
+          {
+            equipmentName: 'Concrete Vibrator',
+            capacity: '50mm poker',
+            hireRatePerDay: 18000,
+            durationDays: 30,
+            fuelCost: 0,
+            operatorCost: 0,
+            totalCost: 30 * 18000,
+          },
+          {
+            equipmentName: 'Scaffolding Set',
+            capacity: '200m2 coverage',
+            hireRatePerDay: 85000,
+            durationDays: 60,
+            fuelCost: 0,
+            operatorCost: 0,
+            totalCost: 60 * 85000,
+          },
+        ],
       },
+
+      // ─── Rate Analyses ───────────────────────────────────────────────────
       rateAnalyses: {
         create: [
           {
-            boqItemNo: "1.2",
-            description: "Concrete class C25 analysis",
-            unit: "m3",
-            materialCost: 120000, // RWF
-            laborCost: 15000,
-            equipmentCost: 5000,
+            boqItemNo: '2.2',
+            description: 'Reinforced concrete strip foundation C25 — rate analysis',
+            unit: 'm3',
+            materialCost: 125000,
+            laborCost: 18000,
+            equipmentCost: 7000,
+            wastage: 5,
+            overheads: 8,
+            profitPercent: 12,
+            finalUnitRate: 150000,
+          },
+          {
+            boqItemNo: '3.1',
+            description: 'Reinforced concrete columns 300x300mm C25 — rate analysis',
+            unit: 'm3',
+            materialCost: 135000,
+            laborCost: 22000,
+            equipmentCost: 8000,
             wastage: 5,
             overheads: 10,
             profitPercent: 15,
-            finalUnitRate: 140000
-          }
-        ]
+            finalUnitRate: 165000,
+          },
+          {
+            boqItemNo: '3.3',
+            description: 'Stone masonry walls 200mm thick — rate analysis',
+            unit: 'm2',
+            materialCost: 28000,
+            laborCost: 9500,
+            equipmentCost: 500,
+            wastage: 3,
+            overheads: 8,
+            profitPercent: 10,
+            finalUnitRate: 38000,
+          },
+          {
+            boqItemNo: '5.2',
+            description: 'Ceramic floor tiles 600x600mm — rate analysis',
+            unit: 'm2',
+            materialCost: 35000,
+            laborCost: 12000,
+            equipmentCost: 0,
+            wastage: 8,
+            overheads: 5,
+            profitPercent: 10,
+            finalUnitRate: 47000,
+          },
+          {
+            boqItemNo: '4.1',
+            description: 'Galvanized iron roof sheet 0.5mm — rate analysis',
+            unit: 'm2',
+            materialCost: 18500,
+            laborCost: 4500,
+            equipmentCost: 0,
+            wastage: 5,
+            overheads: 5,
+            profitPercent: 10,
+            finalUnitRate: 23000,
+          },
+        ],
       },
+
+      // ─── Specifications ──────────────────────────────────────────────────
       specifications: {
         create: [
           {
-            specSection: "03 30 00",
-            description: "Cast-in-Place Concrete",
-            discipline: "STRUCT",
-            revision: "Rev 1",
-            remarks: "Use local suppliers for aggregates"
-          }
-        ]
-      },
-      drawings: {
-        create: [
-          {
-            drawingNo: "A-101",
-            title: "Ground Floor Architectural Plan",
-            discipline: "ARCH",
-            revision: "00",
-            issueDate: new Date("2026-06-01"),
-            scale: "1:100",
-            status: "ISSUED",
-            fileUrl: "https://example.com/archicad_model.pln",
-            fileType: "PLN",
-            length: 50,
-            width: 30,
-            dimensionSheets: {
-              create: [
-                {
-                  code: "DIM-001",
-                  description: "Ground Floor Main Hall Area",
-                  unit: "m2",
-                  rate: 50000,
-                  quantity: 1,
-                  length: 20,
-                  width: 15,
-                  total: 300,
-                  formula: "20 * 15"
-                }
-              ]
-            }
+            specSection: '03 30 00',
+            description: 'Cast-in-Place Concrete (C25 grade for all structural elements)',
+            discipline: 'STRUCT',
+            revision: 'Rev 01',
+            remarks: 'Use Cimerwa OPC 42.5N, water/cement ratio max 0.55',
           },
           {
-            drawingNo: "S-201",
-            title: "Foundation Structural Details",
-            discipline: "STRUCT",
-            revision: "01",
-            issueDate: new Date("2026-06-05"),
-            scale: "1:50",
-            status: "REVISED",
-            fileUrl: "https://example.com/foundation_plan.png",
-            fileType: "IMAGE",
-            length: 10,
-            width: 10
-          }
-        ]
-      }
-    }
+            specSection: '04 43 00',
+            description: 'Stone Masonry Walls — Volcanic Cut Stone',
+            discipline: 'ARCH',
+            revision: 'Rev 01',
+            remarks: 'Gicumbi volcanic stone, mortar mix 1:3 cement:sand',
+          },
+          {
+            specSection: '07 61 00',
+            description: 'Sheet Metal Roofing — Galvanized Iron 0.5mm',
+            discipline: 'ARCH',
+            revision: 'Rev 01',
+            remarks: 'Long-span profile, overlap min 200mm, fix with hook bolts @ 600c/c',
+          },
+          {
+            specSection: '09 30 00',
+            description: 'Ceramic Tiling — Floor and Wet Areas',
+            discipline: 'ARCH',
+            revision: 'Rev 01',
+            remarks: 'Porcelain tiles 600x600mm on 25mm cement:sand 1:3 bed, epoxy grout joints',
+          },
+          {
+            specSection: '05 12 00',
+            description: 'Structural Steel Reinforcement — Grade 500 High Yield',
+            discipline: 'STRUCT',
+            revision: 'Rev 01',
+            remarks: 'Y-bars as per structural drawings, 40mm concrete cover to all steel',
+          },
+          {
+            specSection: '09 90 00',
+            description: 'Painting — Interior and Exterior Emulsion Finish',
+            discipline: 'ARCH',
+            revision: 'Rev 01',
+            remarks: 'Dulux / Crown brand approved, 2 undercoat + 2 finishing coats',
+          },
+          {
+            specSection: '08 14 00',
+            description: 'Solid Core Flush Doors — Interior',
+            discipline: 'ARCH',
+            revision: 'Rev 01',
+            remarks: 'Solid core, 900x2100mm, factory-primed, supply and fix with 3-point locking',
+          },
+        ],
+      },
+    },
   });
 
-  console.log("Mock data created successfully using RWF!");
+  console.log(`\n✅ Project "${project.name}" seeded successfully!`);
+  console.log(`   Project ID: ${project.id}`);
+  console.log(`   BOQ items: 16`);
+  console.log(`   Material Take-Off: 8`);
+  console.log(`   Labor costs: 8`);
+  console.log(`   Equipment costs: 5`);
+  console.log(`   Rate analyses: 5`);
+  console.log(`   Specifications: 7`);
+  console.log(`\n🎯 Ready to generate report for project: ${project.name}`);
 }
 
 main()
-  .catch(e => console.error(e))
+  .catch((e) => {
+    console.error('Seed failed:', e);
+    process.exit(1);
+  })
   .finally(() => prisma.$disconnect());
